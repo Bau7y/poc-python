@@ -1,0 +1,32 @@
+Resolver todos los ejercicios descritos a continuación.
+
+1.En el Supermercado X, existen los siguientes productos con sus respectivos precios: Arroz con un precio de 1000 colones, Coca Cola con un precio de 1500 colones y Pan con un precio de 800 colones. Y se debe desarrollar una función que resuelva las siguientes indicaciones: 
+
+a.En una de las cajas se van a atender solo 3 clientes (while) que están en la fila, los demás no serán atendidos.
+b.Cuando el usuario pasa para ser atendido, se le solicita el nombre, edad y el tipo de cliente; los tipos de cliente son Unitario o Mayorista.
+c.Luego, se le solicita al usuario que indique la cantidad que va a comprar de cada producto.
+d.Seguido, si el cliente es de tipo Unitario, los precios son los establecidos para cada producto; pero si el cliente es de tipo Mayorista, se debe hacer un descuento del 15% al monto total de la compra.
+e.Una vez finalizada la compra, el sistema asigna un descuento del 5% al monto total de la compra; con la restricción que es para los usuarios que están entre los 25 y 35 años, y son de tipo Unitario únicamente.
+f.Por cada cliente se debe imprimir el nombre, la edad, el tipo y el monto total a pagar.
+
+2.Un partido de tenis se divide en sets. Para ganar un set, un jugador debe ganar 6 juegos, pero además debe haber ganado por lo menos dos juegos más que su rival. Si el set está empatado a 5 juegos, el ganador es el primero que llegue a 7. Si el set está empatado a 6 juegos, el set se define en un último juego, en cuyo caso el resultado final es 7-6:
+
+Sabiendo que el jugador A ha ganado m juegos y el jugador B ha ganado n juegos, determine lo siguiente:
+o Si A ganó el set.
+o Si B ganó el set.
+o Si el set aún no termina.
+o Si el set es inválido.
+o Ejemplos: 
+    Jugador A = 4, Jugado B = 5, Resultado = el set aún no termina.
+    Jugador A = 5, Jugado B = 7, Resultado = ganó B.
+    Jugador A = 6, Jugado B = 4, Resultado = ganó A.
+    Jugador A = 9, Jugado B = 10, Resultado = el set es inválido.
+
+3.Fabricas “El cometa” produce artículos con claves (1, 2, 3, 4, 5 y 6). Se requiere un algoritmo para calcular los precios de venta, para esto hay que considerar lo siguiente:
+
+a.Costo de producción = materia prima + mano de obra + gastos de fabricación.
+b.Precio de venta = costo de producción + 45 % de costo de producción.
+
+El costo de la mano de obra se obtiene de la siguiente forma: para los productos con clave 3 o 4 se carga 75 % del costo de la materia prima; para los que tienen clave 1 y 5 se carga 80 %, y para los que tienen clave 2 o 6, 85 %.
+
+Para calcular el gasto de fabricación se considera que, si el artículo que se va a producir tiene claves 2 o 5, este gasto representa 30 % sobre el costo de la materia prima; si las claves son 3 o 6, representa 35 %; si las claves son 1 o 4, representa 28 %. La materia prima tiene el mismo costo para cualquier clave. 
