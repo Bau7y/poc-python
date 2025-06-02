@@ -42,15 +42,13 @@ def caja(productos):
         total = prodQuantity[0] * productos["Arroz"] + prodQuantity[1] * productos["Coca Cola"] + prodQuantity[2] * productos["Pan"]
         if userTypeValidation(datosCliente):
             if ageValidation(datosCliente):
-                print("su total es de: ", total - (total * 0.05), " con un 5% incluido")
+                print(datosCliente["nombre"].capitalize() +" su total es de: ", total - (total * 0.05), " con un 5% incluido")
             else:
-                print("su total es de: ", total)
+                print(datosCliente["nombre"].capitalize() + " su total es de: ", total)
         else:
-            print("Su total es de: ", total - (total * 0.15), " con un 15% incluido")
+            print(datosCliente["nombre"].capitalize() + " su total es de: ", total - (total * 0.15), " con un 15% incluido")
 
         
-        
-
 def main():
     productos = {
         "Arroz" : 1000,
@@ -61,4 +59,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        print("Error!")
