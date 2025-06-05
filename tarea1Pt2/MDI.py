@@ -1,5 +1,12 @@
 def option():
     print("digite 1 para el programa de adivinar el numero")
+    print("digite 2 para el programa de préstamos")
+    print("digite 3 para el programa de maquina expendedora")
+    print("digite 4 para salir...")
+    try:
+        return int(input("Opción: "));
+    except ValueError:
+        print("Solo se permite digitar números...")
 
 
 def menuHandler():
