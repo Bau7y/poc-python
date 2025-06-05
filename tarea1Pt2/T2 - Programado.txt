@@ -1,0 +1,29 @@
+Desarrolle los siguientes algoritmos utilizando el lenguaje Python para encontrar la solución. Además, utilice funciones y un menú que contenga las siguientes opciones:
+1.Adivinar número.
+2.Préstamo.
+3.Monedas.
+4.Salir
+
+1. Hacer un algoritmo en donde el sistema genere un número aleatorio entre 1 y 10. Posteriormente, el usuario tiene 5 oportunidades para adivinar el número, en donde debe ir digitando números y el programa responderá con los símbolos '<' o '>' (como dando pistas), según el número pensado sea menor o mayor. Si el usuario lo adivina, debe indicar el siguiente mensaje "Felicidades has adivinado"; si no adivina debe enviar el siguiente mensaje "Lo siento, más suerte para la próxima". 
+
+2.Defina una función para un programa que determine si un solicitante puede lograr un préstamo bancario (se atiende una persona a la vez, usted decide cuántas personas ingresan).  
+
+a.Deberá pedir los siguientes datos para cada solicitante: 
+  i.Nombre, cantidad de dinero que solicita, salario anual, y valor de otras propiedades (es un monto de dinero también).  
+b.El banco solo aceptará a los usuarios que obtengan más de 6 puntos. 
+c.Los puntos se obtienen de la siguiente manera: 
+  i.Obtiene 5 puntos si el salario anual es igual o mayor al 50% del préstamo que está solicitando. 
+  ii.Obtiene 3 puntos si el salario anual es por lo menos 25% pero menos de 50% del préstamo que está solicitando.
+  iii.Obtienen 1 punto si el salario anual es por lo menos 10% pero menos de 25% del préstamo. 
+  iv.Obtiene 5 puntos si se tiene otra propiedad cuyo valor es el doble del préstamo solicitado o más. 
+  v.Obtiene 3 puntos si se tiene otra propiedad cuyo valor es igual al préstamo solicitado.
+d.Con base a todo a lo anterior, el sistema debe imprimir si la persona es sujeta o no a que le presten el dinero. Debe imprimir toda la información referente a la persona, la cual es: nombre, puntos obtenidos y estado (crédito aprobado o crédito rechazado).
+
+3.Disponemos de una máquina que puede dar vuelto con 5 tipos de monedas distintas: 100,50, 25, 5 y 1. Realizar un algoritmo que, dado el precio del artículo y la cantidad de dinero con el que paga el consumidor, nos indique el vuelto a entregar empleando el menor número posible de monedas.
+
+Por ejemplo: 
+precio del artículo:120
+cantidad con la que paga:200
+el vuelto sería 80, lo cual debe entregar las siguientes monedas: una moneda de 50, una moneda de 25 y una moneda de 5.
+
+
