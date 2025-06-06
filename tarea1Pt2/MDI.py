@@ -1,5 +1,9 @@
 import random
 
+
+def loanRequest(user):
+    pass
+
 def showData(user):
     for key, data in user.items():
         print(f"{key}, {data}")
@@ -21,7 +25,7 @@ def reqData():
         print("Solo se admiten números...")
 
 def reqOptn():
-    print("\nDigite 1 para solicitar el préstamo\nDigite 2 para mostrar los datos del usuario\nDigite 3 para salir")
+    print("\nDigite 1 para solicitar el préstamo\nDigite 2 para mostrar los datos del usuario\nDigite 3 para mostrar si la solicitud fue aprobada\nDigite 4 para salir\n")
     try:
         return int(input("Opción: "))
     except ValueError:
@@ -30,7 +34,7 @@ def reqOptn():
 
 def loanAsking():
     userOptn = 0
-    while (userOptn != 3):
+    while (userOptn != 4):
         userOptn = reqOptn()
         match userOptn:
             case 1:
@@ -40,9 +44,16 @@ def loanAsking():
                     showData(newUser)
                 except UnboundLocalError:
                     print("\nUsuario sin registrar...")
+            case 3:
+                try:
+                    loanRequest(newUser)
+                except UnboundLocalError:
+                    print("\nUsuario sin registrar...")
             case _:
                 print("La opción digitada no existe...")
     print("\nSaliendo...\n")
+
+#////////////////////////////////////////////////////////////////////////////////////////////////////////
 
  #///////////////////////////////////////////Programa Adivinar el numero/////////////////////////////////
 def reqNumber():
@@ -82,7 +93,7 @@ def option():
     except ValueError:
         print("Solo se permite digitar números...")
 
-#////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 def menuHandler():
