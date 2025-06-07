@@ -1,8 +1,22 @@
 import random
 
-
+ #///////////////////////////////////////////Programa solicitud de prestamo/////////////////////////////////
 def loanRequest(user):
-    pass
+    userPoints = 0;
+    if (user["salarioAnual"] >= user["dineroSolicitado"] * 0.50):
+        userPoints += 5;
+    if ((user["salarioAnual"] >= user["dineroSolicitado"] * 0.25) and (user["salarioAnual"] <= user["dineroSolicitado"] * 0.50)):
+        userPoints += 3;
+    if ((user["salarioAnual"] >= user["dineroSolicitado"] * 0.10) and (user["salarioAnual"] < user["dineroSolicitado"] * 0.25)):
+        userPoints += 1;
+    if (user["dineroSolicitado"] * 2 >= user["valorPropiedades"]):
+        userPoints += 5;
+    if (user["dineroSolicitado"] == user["valorPropiedades"]):
+        userPoints += 3;
+    if (userPoints >= 6):
+        print(f"Préstamo aceptado!!!\n{user["nombre"]}, usted cuenta con un total de: {userPoints}", " Puntos")
+    else:
+        print("Rechazado...\nPuntos: ", userPoints)
 
 def showData(user):
     for key, data in user.items():
