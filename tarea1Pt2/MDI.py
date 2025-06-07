@@ -1,4 +1,6 @@
 import random
+ #///////////////////////////////////////////Programa maquina expendedora/////////////////////////////////
+
 
 def showRes(change, amount, diff):
     print(f"\nVuelto: {diff}\n")
