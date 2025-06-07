@@ -1,5 +1,45 @@
 import random
 
+def showRes(change, amount, diff):
+    print(f"\nVuelto: {diff}\n")
+    for coin, amount in change.items():
+        print(f"{amount} moneda(s) de {coin}\n")
+
+
+def calcChange(prodVal, customerPay):
+    if (prodVal > customerPay):
+        print("Lo sentimos...El costo del producto es mayor al monto ingresado\n")
+    else:
+        difference = customerPay - prodVal
+        shDiff = difference
+        coinList = [100, 50, 25, 5, 1]
+        change = {}
+        for value in coinList:
+            amount = difference // value
+            if amount > 0:
+                change[value] = amount
+                difference %= value
+        showRes(change, amount, shDiff)
+
+
+def reqProdCost():
+    try:
+        return int(input("Digite el costo del articulo: "));
+    except ValueError:
+        print("Solo se admiten numeros...")
+
+def reqMoney():
+    try:
+        return int(input("Digite el monto con el que va a pagar el articulo: "));
+    except ValueError:
+        print("Solo se admiten numeros...")
+
+
+def vendingMachine():
+    productVal = reqProdCost()
+    customer = reqMoney()
+    calcChange(productVal, customer)
+
  #///////////////////////////////////////////Programa solicitud de prestamo/////////////////////////////////
 def loanRequest(user):
     userPoints = 0;
@@ -18,9 +58,11 @@ def loanRequest(user):
     else:
         print("Rechazado...\nPuntos: ", userPoints)
 
+
 def showData(user):
     for key, data in user.items():
         print(f"{key}, {data}")
+
 
 def reqData():
     user = {
@@ -37,6 +79,7 @@ def reqData():
         return user;
     except:
         print("Solo se admiten números...")
+
 
 def reqOptn():
     print("\nDigite 1 para solicitar el préstamo\nDigite 2 para mostrar los datos del usuario\nDigite 3 para mostrar si la solicitud fue aprobada\nDigite 4 para salir\n")
@@ -94,7 +137,6 @@ def guessing(rndm):
             print("Lo siento, más suerte para la próxima")
     
 
-
 def guessNumber():
     rndmNumber = random.randint(1,10)
     guessing(rndmNumber)
@@ -108,8 +150,6 @@ def option():
         print("Solo se permite digitar números...")
 
 #////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
 def menuHandler():
     userOpt = 0
     while(userOpt != 4):
@@ -120,7 +160,7 @@ def menuHandler():
             case 2: 
                 loanAsking()
             case 3:
-                pass
+                vendingMachine()
             case 4:
                 print("Saliendo del programa...")
             case _:
