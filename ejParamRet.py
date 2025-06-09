@@ -1,5 +1,5 @@
 def shAddition(a, b):
-    print(f"La suma de {a} + {b} es: {a + b}")
+    print("La suma de {} y {} es: {}".format(a, b, a + b))
 
 
 def reqNumbs():
