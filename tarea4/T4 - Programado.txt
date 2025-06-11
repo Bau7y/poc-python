@@ -1,0 +1,48 @@
+Nota: este ejercicio es válido únicamente si el estudiante asistió de manera presencial a clases.
+
+Utilizando estructuras de datos para gestionar la información, debe resolver lo que se le solicita en el lenguaje Python.
+
+Menú Principal.
+
+El sistema debe tener el siguiente menú principal:
+1. Registro de personas y esquema de vacunación
+2. Reportes
+3. Salir
+
+Utilizando una estructura de datos, debe colocar por defecto la información que se muestra a continuación; esa información corresponde código y nombre de los tipos de vacunas, a como sigue:
+1, AstraZeneca
+2, Pfizer
+3, Janssen 
+4, SINOVAC
+5, Sputnik V
+
+Utilizando una estructura de datos, debe colocar por defecto la información que se muestra a continuación; esa información corresponde código y nombre de las provincias, a como sigue:
+1, San José
+2, Alajuela
+3, Heredia 
+4, Cartago
+5, Guanacaste
+6, Puntarenas
+7, Limón
+
+Registro de personas
+
+Utilizando una estructura de datos debe registrar datos personales de cada participante en el sistema; la información que se debe solicitar es la siguiente: cédula, nombre, género (para el género, cree un submenú con las opciones de Masculino y Femenino), fecha de nacimiento (día/mes/año), provincia (para las provincias, cree un submenú con las opciones que están en la estructura de datos para que el usuario elija). 
+
+Esquema de vacunación
+
+Una vez que el usuario se registra, seguidamente se le solicita la información sobre su esquema de vacunación de la siguiente manera: 
+- Tipo de vacuna: cree un submenú con las opciones que están en la estructura de datos para que el usuario elija.
+- Cantidad de dosis: un valor numérico donde indique cuántas dosis tiene (solo puede ser 1 o 2).
+- Fecha de primera dosis (es obligatoria colocarla) y/o fecha de segunda dosis (es opcional colocarla).
+
+Reportes
+
+Para los reportes, debe crear un submenú de acuerdo con los siguientes:
+
+1.Mostrar el porcentaje de personas por provincia que han registrado su información de vacunación.
+2.Mostrar la cantidad de personas por género que han registrado su información de vacunación contemplando todas las provincias.
+3.Mostrar el porcentaje de personas que han registrado su información de vacunación de acuerdo con los siguientes rangos de edades ya definidos: entre 12 y 19, entre 20 y 29, entre 30 y 39, entre 40 y 49, más de 50.
+4.Mostrar la cantidad de personas que han registrado su información de vacunación por provincia, por género y por un tipo de vacuna; el usuario debe poder escoger la provincia, el género y el tipo de vacuna para generar el reporte (en programación esto se conoce como crear filtros).
+5.Mostrar únicamente la lista de personas con las dos dosis de vacunación, de acuerdo con un rango de fechas; es decir, se coloca una fecha de inicio y una fecha final para que se cumpla un rango, y todas las personas que estén dentro de ese rango se deben imprimir. La información que se debe mostrar es la siguiente: cédula, nombre, género, fecha de nacimiento, tipo de vacuna, cantidad de dosis, fecha de la segunda dosis.
+
