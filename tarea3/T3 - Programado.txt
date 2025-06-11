@@ -1,0 +1,19 @@
+Desarrolle los siguientes algoritmos utilizando el lenguaje Python para encontrar la solución. Además, utilice funciones y un menú que contenga las siguientes opciones:
+1.Generar Listas.
+2.Números.
+3.Salir
+
+1.Defina una función con el nombre crearLista que genere 20 números aleatorios comprendidos entre 0 y 100 e inserte estos a una lista declarada en la misma función.
+
+Ahora, defina otra función con el nombre generarListas que reciba como parámetro la lista creada y llena de números aleatorios de la función anterior. En esta nueva función, genere dos listas: una lista con los números menores o iguales a 50 y la otra lista con los números mayores a 50, de acuerdo con la lista que esta ingresando como parámetro.
+
+Con base a lo anterior, el sistema debe imprimir:
+La lista original.
+La lista de números menores ordenada ascendentemente. Además, de cuántos números contiene dicha lista.
+La lista de números mayores ordenada ascendentemente. Además, de cuántos números contiene dicha lista.
+La sumatoria total de los números de la lista de menores.
+La sumatoria total de los números de la lista de mayores.
+
+2.Defina una función que llene una lista con 20 números aleatorios comprendidos entre 1 y 500; ahora, imprima el número mayor y el número menor de esa lista.
+
+
