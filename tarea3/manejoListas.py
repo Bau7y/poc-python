@@ -14,15 +14,10 @@ def showLists(listaMen, listaMay):
     print("Lista de numeros mayores a 50: ", listaMay, "\n Contiene: ", len(listaMay), " numeros")
 
 def generarListas(lista):
-    listaMenores = []
-    listaMayores = []
-    for nums in lista:
-        if nums <= 50:
-            listaMenores.append(nums)
-            listaMenores.sort()
-        else:
-            listaMayores.append(nums)
-            listaMayores.sort()
+    listaMenores = [ num for num in lista if num <= 50 ]
+    listaMayores = [ num for num in lista if num > 50 ]
+    listaMenores.sort()
+    listaMayores.sort()
     return listaMenores, listaMayores;
 
 def crearLista():
