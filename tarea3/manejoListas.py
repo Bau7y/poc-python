@@ -35,7 +35,6 @@ def reqUserOption():
         print("Solo se permiten numeros...")
 
 def menuHandler():
-    userOption = 0
     while (True):
         userOption = reqUserOption()
         match userOption:
