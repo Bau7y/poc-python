@@ -65,11 +65,12 @@ def reqUserOpt():
 
 
 def menuHandler():
+    users = []
     while(True):
         userOpt = reqUserOpt()
         match userOpt:
             case 1:
-                userReg()
+                users.append(userReg())
             case 2:
                 pass
             case 3:
