@@ -1,15 +1,43 @@
 import re
 
+def reqDosisDate(dosisQuantity):
+    dosisDate = []
+    for i in range(dosisQuantity):
+        while(True):
+            date = input(f"Fecha de la dosis {i + 1} (dd/mm/yyyy): ")
+            if re.match("^\d{1,2}/\d{1,2}/\d{2,4}$", date):
+                if date in dosisDate:
+                    print("Fecha de la dosis ya registrada...")
+                    continue
+                else:
+                    dosisDate.append(date)
+                    break
+            print("Fecha de la dosis no válida...")
+    return dosisDate
+
+
+def reqDosisQuantity():
+    dosisQuantity = 0
+    while(dosisQuantity < 1 or dosisQuantity > 2):
+        dosisQuantity = int(input("Cantidad de dosis (1, 2): "))
+    return dosisQuantity;
+
+def reqVaccineInfo(usersList, vaccines):
+    while(True):
+        for key, value in vaccines.items():
+            print(f"{key}. {value}")
+        try:
+            vaccine = int(input("Vacuna: "))
+            if vaccine >= 1 and vaccine <= 5:
+                usersList[len(usersList) - 1]["vacuna"] = vaccines[str(vaccine)]
+                usersList[len(usersList) - 1]["cantidad dosis"] = reqDosisQuantity()
+                usersList[len(usersList) -1]["fecha(s) dosis"] = reqDosisDate(usersList[len(usersList) - 1]["cantidad dosis"])
+                print("Usuario registrado...\n")
+                return usersList;
+        except:
+            print("Debe digitar una de las opciones que se muestran en pantalla...")
+
 def reqProvince(provinces):
-    provinces = {
-        "1": "San José",
-        "2": "Alajuela",
-        "3": "Cartago",
-        "4": "Heredia",
-        "5": "Guanacaste",
-        "6": "Puntarenas",
-        "7": "Limón"
-    }
     while(True):
         for key, value in provinces.items():
             print(f"{key}. {value}")
@@ -45,13 +73,13 @@ def reqId():
         print("Cédula no válida...")
 
 
-def userReg():
+def userReg(provinces):
     user = {
         "cedula": reqId(),
         "nombre": input("Nombre: "),
         "genero": reqGender(),
         "fechaNacimiento": reqBirthDate(),
-        "provincia": reqProvince()
+        "provincia": reqProvince(provinces)
     }
     return user;
 
@@ -65,12 +93,23 @@ def reqUserOpt():
 
 
 def menuHandler():
+    provinces = {
+        "1": "San José",
+        "2": "Alajuela",
+        "3": "Cartago",
+        "4": "Heredia",
+        "5": "Guanacaste",
+        "6": "Puntarenas",
+        "7": "Limón"
+    }
     users = []
     while(True):
         userOpt = reqUserOpt()
         match userOpt:
             case 1:
-                users.append(userReg())
+                users.append(userReg(provinces))
+                reqVaccineInfo(users, {"1": "AstraZeneca", "2": "Pfizer", "3": "Janssen", "4": "SINOVAC", "5": "Sputnik V"})
+                print(users)
             case 2:
                 pass
             case 3:
