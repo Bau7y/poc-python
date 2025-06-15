@@ -1,4 +1,30 @@
 import re
+def reqScndUseropt():
+    print("1.Mostrar el porcentaje de personas por provincia que han registrado su información de vacunación.\n2.Mostrar la cantidad de personas por género que han registrado su información de vacunación\n3.Mostrar el porcentaje de personas que han registrado su información de vacunación(Por rangos de edad)\n4.Mostrar la cantidad de personas que han registrado su información de vacunación por provincia, por género y por un tipo de vacuna\n5.Mostrar únicamente la lista de personas con las dos dosis de vacunación, de acuerdo con un rango de fechas\n6.Salir\n")
+    try:
+        return int(input("Opción: "))
+    except ValueError:
+        print("Debe digitar una de las opciones que se muestran en pantalla...")
+
+def secondMnuHandler():
+    while(True):
+        userOpt = reqScndUseropt()
+        match userOpt:
+            case 1:
+                print("1")
+            case 2:
+                print("2")
+            case 3:
+                print("3")
+            case 4:
+                print("4")
+            case 5:
+                print("5")
+            case 6:
+                print("Saliendo...")
+                break
+            case _:
+                print("Debe digitar una de las opciones que se muestran en pantalla...")
 
 def reqDosisDate(dosisQuantity):
     dosisDate = []
@@ -104,7 +130,7 @@ def menuHandler():
                 reqVaccineInfo(users, {"1": "AstraZeneca", "2": "Pfizer", "3": "Janssen", "4": "SINOVAC", "5": "Sputnik V"})
                 print(users)
             case 2:
-                pass
+                secondMnuHandler()
             case 3:
                 print("Saliendo...")
                 quit()
