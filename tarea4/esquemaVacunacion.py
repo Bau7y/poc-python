@@ -6,13 +6,14 @@ def reqDosisDate(dosisQuantity):
         while(True):
             date = input(f"Fecha de la dosis {i + 1} (dd/mm/yyyy): ")
             if re.match("^\d{1,2}/\d{1,2}/\d{2,4}$", date):
-                if date in dosisDate:
-                    print("Fecha de la dosis ya registrada...")
-                    continue
-                else:
-                    dosisDate.append(date)
-                    break
-            print("Fecha de la dosis no válida...")
+                if re.match(r"^(0[1-9]|[12][0-9]|3[01])/(0[1-9]|1[0-2])/(\d{2, 4})$", date):
+                    if date in dosisDate:
+                        print("Fecha de la dosis ya registrada...")
+                        continue
+                    else:
+                        dosisDate.append(date)
+                        break
+                print("Fecha de la dosis no válida...")
     return dosisDate
 
 
@@ -53,7 +54,8 @@ def reqBirthDate():
     while(True):
         birthDate = input("Fecha de nacimiento (dd/mm/yyyy): ")
         if re.match("^\d{1,2}/\d{1,2}/\d{2,4}$", birthDate):
-            return birthDate;
+            if re.match(r"^(0[1-9]|[12][0-9]|3[01])/(0[1-9]|1[0-2])/(\d{2,4})$", birthDate):
+                return birthDate;
         print("Fecha de nacimiento no válida...")
 
 
@@ -76,7 +78,7 @@ def reqId():
 def userReg(provinces):
     user = {
         "cedula": reqId(),
-        "nombre": input("Nombre: "),
+        "nombre": input("Nombre: ").upper(),
         "genero": reqGender(),
         "fechaNacimiento": reqBirthDate(),
         "provincia": reqProvince(provinces)
@@ -93,21 +95,12 @@ def reqUserOpt():
 
 
 def menuHandler():
-    provinces = {
-        "1": "San José",
-        "2": "Alajuela",
-        "3": "Cartago",
-        "4": "Heredia",
-        "5": "Guanacaste",
-        "6": "Puntarenas",
-        "7": "Limón"
-    }
     users = []
     while(True):
         userOpt = reqUserOpt()
         match userOpt:
             case 1:
-                users.append(userReg(provinces))
+                users.append(userReg({"1": "San José", "2": "Alajuela", "3": "Cartago", "4": "Heredia", "5": "Guanacaste", "6": "Puntarenas", "7": "Limón"}))
                 reqVaccineInfo(users, {"1": "AstraZeneca", "2": "Pfizer", "3": "Janssen", "4": "SINOVAC", "5": "Sputnik V"})
                 print(users)
             case 2:
