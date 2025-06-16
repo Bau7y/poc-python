@@ -9,19 +9,24 @@ def reqId():
 
 def reqUsers():
     listaUsers = []
-    for i in range(3):
+    while(len(listaUsers) < 3):
         users = {
             "nombre": reqName(),
             "cedula": reqId()
         }
-        listaUsers.append(users)
+        if users["cedula"] not in [user["cedula"] for user in listaUsers]:
+            print("Usuario registrado...\n")
+            listaUsers.append(users)
+        else:
+            print("Usuario ya registrado...\n")
+            continue
     return listaUsers;
 
 
 def main():
     users = reqUsers()
     print(users)
-    
+
 
 if __name__ == "__main__":
     main()
