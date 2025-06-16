@@ -1,4 +1,21 @@
 import re
+
+def show2DosisPeople(userList):
+    for user in userList:
+        if user["cantidadDosis"] == 2:
+            print(user)
+
+def showPeoplePercentageAge(userList):
+    pass
+
+
+def showGenderQaantity(userList, provinces):
+    for province in provinces:
+        provinceUsers = list(filter(lambda user: user["provincia"] == province, userList))
+        print(f"Provincia: {province}")
+        for user in provinceUsers:
+            print(f"Genero: {user['genero']} - Cantidad: {len(list(filter(lambda user: user['genero'] == user['genero'], provinceUsers)))}")
+
 def showProvincePercentage(usersList, provinces):
     for province in provinces:
         provinceUsers = list(filter(lambda user: user["provincia"] == province, usersList))
@@ -19,13 +36,13 @@ def secondMnuHandler(usersList, provinces):
             case 1:
                 showProvincePercentage(usersList, provinces)
             case 2:
-                print("2")
+                showGenderQaantity(usersList, provinces)
             case 3:
-                print("3")
+                showPeoplePercentageAge(usersList)
             case 4:
                 print("4")
             case 5:
-                print("5")
+                show2DosisPeople(usersList)
             case 6:
                 print("Saliendo...")
                 break
@@ -62,8 +79,8 @@ def reqVaccineInfo(usersList, vaccines):
             vaccine = int(input("Vacuna: "))
             if vaccine >= 1 and vaccine <= 5:
                 usersList[len(usersList) - 1]["vacuna"] = vaccines[str(vaccine)]
-                usersList[len(usersList) - 1]["cantidad dosis"] = reqDosisQuantity()
-                usersList[len(usersList) -1]["fecha(s) dosis"] = reqDosisDate(usersList[len(usersList) - 1]["cantidad dosis"])
+                usersList[len(usersList) - 1]["cantidadDosis"] = reqDosisQuantity()
+                usersList[len(usersList) -1]["fechaDosis"] = reqDosisDate(usersList[len(usersList) - 1]["cantidadDosis"])
                 print("Usuario registrado...\n")
                 return usersList;
         except:
