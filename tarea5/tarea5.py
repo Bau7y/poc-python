@@ -1,4 +1,26 @@
 
+def divisas(dicMonType):
+    inputMonType = input("Digite el tipo de moneda: ").upper()
+    for key, value in dicMonType.items():
+        if inputMonType == key.upper():
+            print(value)
+        else:
+            print("No se ha encontrado el tipo de moneda digitado...")
+
+
+def evenAges(ages):
+    for name, age in ages.items():
+        if age % 2 == 0:
+            print(f"{name} tiene {age} años y es par")
+
+
+def reqAges():
+    dicPeople = {}
+    for i in range(0, int(input("Digite la cantidad de personas que desea registrar: "))):
+        dicPeople[input("Digite el nombre de la persona: ")] = int(input("Digite la edad de la persona: "))
+        print("\n")
+    evenAges(dicPeople)
+
 
 def reporte(sucursales):
     dicReportes = {}
@@ -35,9 +57,9 @@ def menuHandler():
             case 1:
                 print(reporte(sucursales))
             case 2:
-                print("Personas")
+                reqAges()
             case 3:
-                print("Divisas")
+                divisas({'Euro':'€', 'Dollar':'$', 'Yen':'¥'})
             case 4:
                 print("Saliendo...")
                 quit()
