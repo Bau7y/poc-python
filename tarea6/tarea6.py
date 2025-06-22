@@ -1,3 +1,25 @@
+def showUsers(usersList):
+    for users in usersList:
+        for key, value in users.items():
+            print(key, ": ", value, "\n")
+
+
+def followCase(userReg, usersList):
+    for showUser in usersList:
+        print(showUser["nombre"], ":", showUser["cedula"])
+    follow = int(input("\nCedula del usuario que desea seguir: "))
+    for user in usersList:
+        if user["cedula"] == follow:
+            if userReg["cedula"] not in user["seguidores"]:
+                user["seguidores"].append(userReg["cedula"]) 
+                print("Usuario seguido con exito...\n")
+                break;
+            else:
+                print("Ya sigues a este usuario...\n")
+                break;
+    else:
+        print("Usuario no encontrado...")
+
 
 def messagesCase(user):
     messagesList = []
@@ -6,10 +28,10 @@ def messagesCase(user):
     user["mensajes"] = messagesList
     print(user["mensajes"])
     print("Mensajes publicados con exito...\n")
-    return user
+    return user;
 
 
-def loginMnu(user):
+def loginMnu(user, usersList):
     while(True):
         print("\n1.Publicar Mensajes\n2.Seguir Usuarios\n3.Salir")
         try:
@@ -18,7 +40,7 @@ def loginMnu(user):
                 case 1:
                     messagesCase(user)
                 case 2:
-                    print("Seguir Usuarios")
+                    followCase(user, usersList)
                 case 3:
                     print("\nSaliendo...\n")
                     break;
@@ -30,13 +52,14 @@ def loginMnu(user):
 
 def loginHandler(usersList):
     print("\n-Iniciar Sesion-\n\n")
+    ced =int(input("Ingrese su cedula: ").replace(" ", ""))
     for user in usersList:
-        if user["cedula"] == int(input("Ingrese su cedula: ").replace(" ", "")):
+        if user["cedula"] == ced:
             print("Bienvenido\n", user["nombre"])
-            loginMnu(user)
-        else:
-            print("Cedula no encontrada...")
+            loginMnu(user, usersList)
             break;
+    else:
+        print("Usuario no encontrado...")
 
 
 def reqGender():
@@ -48,28 +71,30 @@ def reqGender():
 
 
 def reqId(usersList):
-    if usersList == []:
-        try:
-            return int(input("Ingrese su cedula: ").replace(" ", ""))
-        except ValueError:
-            print("Solo se admiten numeros...")
-    else:
-        for user in usersList:
+    while(True):
+        if usersList == []:
             try:
-                userId = int(input("Ingrese su cedula: ").replace(" ", ""))
-                if userId == user["cedula"]:
-                    print("La cedula ya se encuentra registrada...")
-                else:
-                    return userId
+                return int(input("Ingrese su cedula: ").replace(" ", ""))
             except ValueError:
                 print("Solo se admiten numeros...")
+        else:
+            for user in usersList:
+                try:
+                    userId = int(input("Ingrese su cedula: ").replace(" ", ""))
+                    if userId == user["cedula"]:
+                        print("La cedula ya se encuentra registrada...")
+                    else:
+                        return userId
+                except ValueError:
+                    print("Solo se admiten numeros...")
 
 
 def userRegistration(usersList):
     user = {
         "cedula": reqId(usersList),
         "nombre" : input("Ingrese su nombre: ").capitalize(),
-        "genero": reqGender()
+        "genero": reqGender(),
+        "seguidores": []
     }
     return user;
 
@@ -96,7 +121,10 @@ def mnuHandler():
                 newUser = userRegistration(listaPersonas)
                 listaPersonas.append(newUser)
             case 3:
-                print("Reporte")
+                if listaPersonas == []:
+                    print("No hay usuarios registrados...")
+                else:
+                    showUsers(listaPersonas)
             case 4:
                 print("Saliendo...")
                 quit()
