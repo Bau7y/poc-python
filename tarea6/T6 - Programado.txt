@@ -1,0 +1,33 @@
+Debe simular un sistema de red social simplificada, en donde los usuarios puedan publicar mensajes y seguir a otros usuarios. Utilice funciones y estructuras de datos (listas y/o diccionarios) para resolver el problema.
+
+Debe crear un menú que contenga las siguientes opciones:
+1.Iniciar sesión.
+  1.1 Publicar mensajes (deben haber mensajes previamente quemados en alguna estructura de datos y únicamente mostrarlos en forma de menú y que el usuario elija).
+  1.2 Seguir a otros usuarios.
+2.Registrar personas.
+3.Reporte.
+4.Salir
+
+Función de Registrar personas
+El sistema debe solicitar la cédula (no deben haber cédulas repetidas), el nombre y el género de la persona; esa información se debe almacenar en una estructura de datos.
+El sistema debe permitir insertar la cantidad de personas que se deseen siempre ingresando a través de la opción del menú.
+
+Función de Iniciar sesión
+El sistema debe permitir que un usuario registrado pueda ingresar a las secciones 1.1 y 1.2; la forma de acceso es a través de la cédula, validando que ésta exista.
+
+Función Publicar mensajes 
+Una vez que el usuario ha iniciado sesión, puede elegir uno de los mensajes y debe suceder dos procesos: uno, almacenar el mensaje en la misma estructura de datos del registro del usuario; por ejemplo: [25,"Juan","Masculino",["Qué hambre tengo!"]] e, imprimir el mensaje en consola. 
+
+Función Seguir a otros usuarios
+En esta función, se debe imprimir en forma de menú todas las cédulas de los usuarios registrados para que el usuario que está iniciando sesión, pueda elegir a quién quiere seguir; cuando esto sucede, se le debe asignar a la persona elegida la cédula que lo intenta seguir; por ejemplo:
+Supongamos que la persona con la cédula 500 inicia sesión y quiere seguir a alguien, entonces, se le imprimen las siguientes cédulas:
+1. 100
+2. 200
+3. 300
+4. 400
+La persona que inició sesión, elije a la cédula 200, entonces, al registro de la persona con la cédula 200 se le debe asignar que la cédula 500 lo empezó a seguir; algo así:
+[200,"Juan","Masculino",[500]]
+
+Reporte
+Se imprime toda la información de todas las personas registradas en la consola, en donde se pueda visualizar su información personal, los mensajes publicados y las personas que sigue; por ejemplo:
+[200,"Juan","Masculino",["Qué hambre tengo!","Voy de paseo!!"],[500,300]]
