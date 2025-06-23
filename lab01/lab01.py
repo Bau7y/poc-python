@@ -1,4 +1,5 @@
 import random, os
+from Reglas import ReglaTurno
 
 
 def mnuHandler():
