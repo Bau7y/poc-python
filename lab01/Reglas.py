@@ -1,10 +1,11 @@
 #clase de estrategias
 
 class ReglaTurno:
-    def __init__(self, conocimiento, estrategia, energia):
+    def __init__(self, conocimiento, estrategia, energia, rule):
         self.__conocimiento = conocimiento
         self.__estrategia = estrategia
         self.__energia = energia
+        self.__rule = rule
     
     def SumaConocimientoEstrategia(self):
         return self.__conocimiento + self.__estrategia
@@ -24,3 +25,6 @@ class ReglaTurno:
     
     def EstrategiaPorEnergia(self):
         return self.__estrategia * self.__energia
+    
+    def getRegla(self):
+        return self.__rule

@@ -1,5 +1,4 @@
 import random, os
-from Reglas import ReglaTurno
 
 def game():
     ronda = 0
@@ -8,6 +7,8 @@ def game():
         index = random.randint(0, 4)
         os.system("cls")
         print("---------------Juego---------------\nRegla de la ronda: ", listaReglas[index], "\n\n")
+        os.system("pause")
+        ronda += 1
 
 def reqUserOpt():
     print("---------------Bienvenido---------------\n1.Iniciar Juego\n2.Salir")
