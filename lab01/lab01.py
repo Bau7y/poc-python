@@ -1,9 +1,35 @@
 import random, os
 from Reglas import ReglaTurno
 
+def game():
+    ronda = 0
+    while(ronda < 5):
+        listaReglas = ["conocimiento + estrategia", "estrategia + energía", "(conocimiento * 2) - energía", "conocimiento + estrategia + energía", "estrategia * energía"]
+        index = random.randint(0, 4)
+        os.system("cls")
+        print("---------------Juego---------------\nRegla de la ronda: ", listaReglas[index], "\n\n")
+
+def reqUserOpt():
+    print("---------------Bienvenido---------------\n1.Iniciar Juego\n2.Salir")
+    try:
+        return int(input("\nOpción: "))
+    except ValueError:
+        print("Solo se admiten numeros...")
+
 
 def mnuHandler():
-    pass
+
+    while(True):
+        opt = reqUserOpt()
+        match opt:
+            case 1:
+                game()
+            case 2:
+                print("\nSaliendo...\n")
+                quit()
+            case _:
+                print("No se ha encontrado la opción digitada...\n")
+
 
 
 if __name__ == "__main__":
