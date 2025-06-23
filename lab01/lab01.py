@@ -1,3 +1,6 @@
+import random, os
+
+
 def mnuHandler():
     pass
 
