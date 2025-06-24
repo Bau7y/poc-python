@@ -12,4 +12,11 @@ class Humano:
                     [2,4,10], [7,7,6], [7,10,1], [10,1,4], [1,9,7], [10,4,2], [6,8,1], [1,10,4], [4,10,2], [3,8,5], [7,6,6], [10,2,7], [9,1,6],
                     [10,5,5], [9,6,2], [2,9,4], [3,7,6], [8,8,3], [5,5,8], [7,4,6], [8,2,7], [3,10,5], [2,10,4], [4,6,5], [4,6,7], [3,5,8]]
     def __init__(self):
-        pass
+        self.__cartas = {} #diccionario de cartas
+
+    def getCartas(self):
+        for i in range(5):
+            carta = random.randint(0,51)
+            self.__cartas[self.listaCartas[carta]] = self.listaValores[carta]
+        return self.__cartas
+            

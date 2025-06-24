@@ -1,12 +1,22 @@
 import random, os
+from Humano import Humano
+
+def showCards():
+    mazo = Humano().getCartas()
+    carta=0
+    while(carta < 5):
+        for key, value in mazo.items():
+            carta +=1
+            print(f"{carta}. ",key, value)
 
 def game():
     ronda = 0
     while(ronda < 5):
         listaReglas = ["conocimiento + estrategia", "estrategia + energía", "(conocimiento * 2) - energía", "conocimiento + estrategia + energía", "estrategia * energía"]
-        index = random.randint(0, 4)
+        index = random.randint(0,4)
         os.system("cls")
         print("---------------Juego---------------\nRegla de la ronda: ", listaReglas[index], "\n\n")
+        showCards()
         os.system("pause")
         ronda += 1
 
