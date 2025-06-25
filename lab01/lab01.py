@@ -1,7 +1,14 @@
 import random, os
-from Humano import Humano
+from HumanClass import *
+from IaClass import *
 
-def reqCard(mazo):
+def showIa(regla):
+    print("---------------Humano vs IA---------------\nRegla de la ronda: ", regla, "\n\n")
+    print("Turno de que la Ia elija su carta...")
+    os.system("pause")
+
+
+def solicitarCarta(mazo):
     while(True):
         try:
             option = input("\nSeleccione una carta(# de ????): ")
@@ -15,7 +22,7 @@ def reqCard(mazo):
             print("Solo se admiten numeros...")
 
 
-def showCards(mazo):
+def mostrarCartas(mazo):
     carta=0
     while(carta < 5):
         for key, value in mazo.items():
@@ -28,12 +35,21 @@ def game():
     while(ronda < 5):
         listaReglas = ["conocimiento + estrategia", "estrategia + energía", "(conocimiento * 2) - energía", "conocimiento + estrategia + energía", "estrategia * energía"]
         index = random.randint(0,4)
-        mazo = Humano().getCartas()
+        human = Humano()
+        ia = Bot()
+        mazo = human.darCartas()
         os.system("cls")
         print("---------------Humano vs IA---------------\nRegla de la ronda: ", listaReglas[index], "\n\n")
-        showCards(mazo)
-        card = reqCard(mazo)
+        mostrarCartas(mazo)
+        carta = solicitarCarta(mazo)
         os.system("pause")
+        os.system("cls")
+        showIa(listaReglas[index])
+        mazoIa = ia.darCartas()
+        cartaIa = ia.analisis(mazoIa, index)
+        #Apartado despues de todos los calculos
+        human.borrarMazo(mazo)
+        ia.borrarMazo(mazoIa)
         ronda += 1
 
 def reqUserOpt():

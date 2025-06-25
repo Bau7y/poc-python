@@ -1,7 +1,8 @@
 #Clase de la IA 
 import random
+from Reglas import ReglaTurno
 
-class IA:
+class Bot:
     listaCartas = [["A de Corazones","2 de Corazones", "3 de Corazones", "4 de Corazones", "5 de Corazones", "6 de Corazones", "7 de Corazones", "8 de Corazones", "9 de Corazones", "10 de Corazones", "J de Corazones", "Q de Corazones", "K de Corazones",
                    "A de Diamantes","2 de Diamantes", "3 de Diamantes", "4 de Diamantes", "5 de Diamantes", "6 de Diamantes", "7 de Diamantes", "8 de Diamantes", "9 de Diamantes", "10 de Diamantes", "J de Diamantes", "Q de Diamantes", "K de Diamantes",
                    "A de Tréboles","2 de Tréboles", "3 de Tréboles", "4 de Tréboles", "5 de Tréboles", "6 de Tréboles", "7 de Tréboles", "8 de Tréboles", "9 de Tréboles", "10 de Tréboles", "J de Tréboles", "Q de Tréboles", "K de Tréboles",
@@ -11,13 +12,29 @@ class IA:
                    [2,9,4],[3,8,4],[2,8,9],[4,10,1],[4,9,2],[9,1,9],[2,9,6],[7,8,3],[3,8,4],[6,6,3],[8,6,1],[8,5,5],[10,1,5],
                    [3,6,7],[6,1,10],[3,7,5],[2,4,10],[7,6,6],[7,4,6],[4,6,7],[1,5,10],[8,6,4],[2,7,8],[8,6,6],[3,10,5],[3,6,7]]
     def __init__(self):
-        self.__barajas = {} #diccionario de cartas
+        self.__baraja = {} #diccionario de cartas
 
     def darCartas(self):
         for i in range(5):
             carta = random.randint(0,51)
-            self.__barajas[self.listaCartas[0][carta]] = self.listaCartas[1][carta]
-        return self.__barajas
+            self.__baraja[self.listaCartas[0][carta]] = self.listaCartas[1][carta]
+        return self.__baraja
     
-    def analisis(self, regla, baraja):
-        pass
+    
+    def analisis(self, baraja, regla):
+        if regla == 0:
+            pass
+        elif regla == 1:
+            pass
+        elif regla == 2:
+            pass
+
+
+    def borrarMazo(self, mazo):
+        for key, val in mazo.items():
+            if key in self.listaCartas[0]:
+                self.listaCartas[0].remove(key)
+                return self.listaCartas
+            if val in self.listaValore[1]:
+                self.listaValores[1].remove(val)
+                return self.listaValores

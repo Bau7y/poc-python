@@ -14,9 +14,20 @@ class Humano:
     def __init__(self):
         self.__cartas = {} #diccionario de cartas
 
-    def getCartas(self):
+    def darCartas(self):
         for i in range(5):
             carta = random.randint(0,51)
             self.__cartas[self.listaCartas[carta]] = self.listaValores[carta]
         return self.__cartas
+    
+    
+    def borrarMazo(self, mazo):
+        for key, val in mazo.items():
+            if key in self.listaCartas:
+                self.listaCartas.remove(key)
+                return self.listaCartas
+            if val in self.listaValores:
+                self.listaValores.remove(val)
+                return self.listaValores
+            
             
