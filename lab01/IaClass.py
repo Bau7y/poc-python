@@ -19,3 +19,5 @@ class IA:
             self.__barajas[self.listaCartas[0][carta]] = self.listaCartas[1][carta]
         return self.__barajas
     
+    def analisis(self, regla, baraja):
+        pass
