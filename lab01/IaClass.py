@@ -27,7 +27,7 @@ class Bot:
             self.cartaSeleccionada = {}
             for key, val in baraja.items():
                 puntos = ReglaTurno(val[0], val[1], val[2]).SumaTodo()
-                if puntos >= 16:
+                if puntos >= 15:
                     self.cartaSeleccionada[key] = val
                     return self.cartaSeleccionada
         if regla == 0:
