@@ -137,7 +137,7 @@ def game():
         os.system("cls")
         showIa(listaReglas[index])
         mazoIa = ia.darCartas()
-        cartaIa = ia.analisis(mazoIa, index)
+        cartaIa = ia.analisis(mazoIa, index, rondas)
         print(cartaIa)
         os.system("pause")
         os.system("cls")

@@ -22,7 +22,14 @@ class Bot:
         return self.__baraja
     
     
-    def analisis(self, baraja, regla):
+    def analisis(self, baraja, regla, rondas):
+        if rondas["ganados"] == 2:
+            self.cartaSeleccionada = {}
+            for key, val in baraja.items():
+                puntos = ReglaTurno(val[0], val[1], val[2]).SumaTodo()
+                if puntos >= 16:
+                    self.cartaSeleccionada[key] = val
+                    return self.cartaSeleccionada
         if regla == 0:
             self.cartaSeleccionada = {}
             for key, val in baraja.items():
