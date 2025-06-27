@@ -23,7 +23,7 @@ class Bot:
     
     
     def analisis(self, baraja, regla, rondas):
-        if rondas["ganados"] == 2:
+        if rondas["ganadas"] == 2:
             self.cartaSeleccionada = {}
             for key, val in baraja.items():
                 puntos = ReglaTurno(val[0], val[1], val[2]).SumaTodo()
