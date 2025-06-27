@@ -16,7 +16,7 @@ class Humano:
 
     def darCartas(self):
         for i in range(5):
-            carta = random.randint(0,51)
+            carta = random.randint(0,len(self.listaCartas)-1)
             self.__cartas[self.listaCartas[carta]] = self.listaValores[carta]
         return self.__cartas
     

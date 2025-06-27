@@ -14,9 +14,10 @@ class Bot:
     def __init__(self):
         self.__baraja = {} #diccionario de cartas
 
+
     def darCartas(self):
         for i in range(5):
-            carta = random.randint(0,51)
+            carta = random.randint(0,len(self.listaCartas[0])-1)
             self.__baraja[self.listaCartas[0][carta]] = self.listaCartas[1][carta]
         return self.__baraja
     
@@ -25,7 +26,8 @@ class Bot:
         if regla == 0:
             self.cartaSeleccionada = {}
             for key, val in baraja.items():
-                if val[0] + val[1] >= 8:
+                regla = ReglaTurno(val[0], val[1], val[2]).SumaConocimientoEstrategia()
+                if regla >= 8:
                     self.cartaSeleccionada[key] = val
                     return self.cartaSeleccionada
         elif regla == 1:
