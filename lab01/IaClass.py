@@ -23,21 +23,39 @@ class Bot:
     
     def analisis(self, baraja, regla):
         if regla == 0:
-            cartaSeleccionada = {}
+            self.cartaSeleccionada = {}
             for key, val in baraja.items():
-                if val[0] + val[1] >= 9:
-                    cartaSeleccionada[key] = val
-                    return cartaSeleccionada
+                if val[0] + val[1] >= 8:
+                    self.cartaSeleccionada[key] = val
+                    return self.cartaSeleccionada
         elif regla == 1:
-            cartaSeleccionada = {}
+            self.cartaSeleccionada = {}
             for key, val in baraja.items():
                 regla = ReglaTurno(val[0],val[1],val[2]).SumaEstrategiaEnergia()
+                if regla >= 8:
+                    self.cartaSeleccionada[key] = val
+                    return self.cartaSeleccionada
         elif regla == 2:
-            pass
+            self.cartaSeleccionada = {}
+            for key, val in baraja.items():
+                regla = ReglaTurno(val[0], val[1], val[2]).ConocimientoMenosEnergia()
+                if regla >= 7:
+                    self.cartaSeleccionada[key] = val
+                    return self.cartaSeleccionada
         elif regla == 3:
-            pass
+            self.cartaSeleccionada = {}
+            for key, val in baraja.items():
+                regla = ReglaTurno(val[0], val[1], val[2]).SumaTodo()
+                if regla >= 12:
+                    self.cartaSeleccionada[key] = val
+                    return self.cartaSeleccionada
         elif regla == 4:
-            pass
+            self.cartaSeleccionada = {}
+            for key, val in baraja.items():
+                regla = ReglaTurno(val[0], val[1], val[2]).EstrategiaPorEnergia()
+                if regla >= 16:
+                    self.cartaSeleccionada[key] = val
+                    return self.cartaSeleccionada
 
 
     def borrarMazo(self, mazo):
