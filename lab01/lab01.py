@@ -9,8 +9,10 @@ def mostrarStats(punto, regla, dicRonda):
     print("---------------Humano vs IA---------------\nRegla de la ronda: ", regla, "\n\n")
     if punto == 1:
         dicRonda["ganadas"] += 1
-    else:
+    elif punto == 2:
         dicRonda["perdidas"] += 1
+    else:
+        pass
     for llave, valor in dicRonda.items():
         print(llave, ": ", valor)
     os.system("pause")
