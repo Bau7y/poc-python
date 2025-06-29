@@ -11,6 +11,8 @@ class Bot:
                    [8,4,4],[3,7,10],[2,6,9],[2,9,5],[10,6,1],[2,8,8],[7,1,7],[1,7,10],[5,1,10],[9,4,3],[10,3,5],[6,8,3],[8,2,9],
                    [2,9,4],[3,8,4],[2,8,9],[4,10,1],[4,9,2],[9,1,9],[2,9,6],[7,8,3],[3,8,4],[6,6,3],[8,6,1],[8,5,5],[10,1,5],
                    [3,6,7],[6,1,10],[3,7,5],[2,4,10],[7,6,6],[7,4,6],[4,6,7],[1,5,10],[8,6,4],[2,7,8],[8,6,6],[3,10,5],[3,6,7]]]
+    
+
     def __init__(self):
         self.__baraja = {} #diccionario de cartas
 
@@ -23,46 +25,35 @@ class Bot:
     
     
     def analisis(self, baraja, regla, rondas):
+        self.cartaSeleccionada = {}
         if rondas["ganadas"] == 2:
-            self.cartaSeleccionada = {}
             for key, val in baraja.items():
-                puntos = ReglaTurno(val[0], val[1], val[2]).SumaTodo()
-                if puntos >= 15:
+                if ReglaTurno(val[0], val[1], val[2]).SumaTodo() >= 15:
                     self.cartaSeleccionada[key] = val
                     return self.cartaSeleccionada
         if regla == 0:
-            self.cartaSeleccionada = {}
             for key, val in baraja.items():
-                regla = ReglaTurno(val[0], val[1], val[2]).SumaConocimientoEstrategia()
-                if regla >= 8:
+                if ReglaTurno(val[0], val[1], val[2]).SumaConocimientoEstrategia() >= 8:
                     self.cartaSeleccionada[key] = val
                     return self.cartaSeleccionada
         elif regla == 1:
-            self.cartaSeleccionada = {}
             for key, val in baraja.items():
-                regla = ReglaTurno(val[0],val[1],val[2]).SumaEstrategiaEnergia()
-                if regla >= 8:
+                if ReglaTurno(val[0],val[1],val[2]).SumaEstrategiaEnergia() >= 8:
                     self.cartaSeleccionada[key] = val
                     return self.cartaSeleccionada
         elif regla == 2:
-            self.cartaSeleccionada = {}
             for key, val in baraja.items():
-                regla = ReglaTurno(val[0], val[1], val[2]).ConocimientoMenosEnergia()
-                if regla >= 7:
+                if ReglaTurno(val[0], val[1], val[2]).ConocimientoMenosEnergia() >= 7:
                     self.cartaSeleccionada[key] = val
                     return self.cartaSeleccionada
         elif regla == 3:
-            self.cartaSeleccionada = {}
             for key, val in baraja.items():
-                regla = ReglaTurno(val[0], val[1], val[2]).SumaTodo()
-                if regla >= 12:
+                if ReglaTurno(val[0], val[1], val[2]).SumaTodo() >= 12:
                     self.cartaSeleccionada[key] = val
                     return self.cartaSeleccionada
         elif regla == 4:
-            self.cartaSeleccionada = {}
             for key, val in baraja.items():
-                regla = ReglaTurno(val[0], val[1], val[2]).EstrategiaPorEnergia()
-                if regla >= 16:
+                if ReglaTurno(val[0], val[1], val[2]).EstrategiaPorEnergia() >= 16:
                     self.cartaSeleccionada[key] = val
                     return self.cartaSeleccionada
 
