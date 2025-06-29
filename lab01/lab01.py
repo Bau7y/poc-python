@@ -95,7 +95,7 @@ def ganador(cartaHumano, cartaIa, regla):
 
 def showIa(regla):
     print("---------------Humano vs IA---------------\nRegla de la ronda: ", regla, "\n\n")
-    print("Turno de que la Ia elija su carta...")
+    print("\n\nTurno de que la Ia elija su carta...\n")
     os.system("pause")
 
 
@@ -130,7 +130,7 @@ def game():
         ia = Bot()
         mazoH = human.darCartas()
         os.system("cls")
-        print("---------------Humano vs IA---------------\nRegla de la ronda: ", listaReglas[index], "\n\n")
+        print("---------------Humano vs IA---------------\nRegla de la ronda: ", listaReglas[index], "\n\nGana quien obtenga el mayor puntaje acorde a la regla\n\n[conocimiento, estrategia y energía]\n[    #   ,   #   ,   #   ]\n\n")
         mostrarCartas(mazoH)
         carta = solicitarCarta(mazoH)
         os.system("pause")
