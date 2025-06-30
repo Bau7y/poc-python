@@ -1,0 +1,31 @@
+Este ejercicio será realizado y evaluado únicamente si el estudiante está de manera presencial en la clase, incluso, aunque el docente permita que se termine el trabajo fuera de horario de clases.
+
+Utilizando estructuras de datos para gestionar la información, debe resolver lo que se le solicita en el lenguaje Python.
+
+Menú Principal.
+
+El sistema debe tener el siguiente menú principal:
+1. Cantidad de filas
+2. Encontrar valor
+3. Salir
+
+1. Definir una función que resuelva el siguiente problema:
+El sistema debe permitir por pantalla digitar las dimensiones de la matriz, por ejemplo, en un campo se coloca un 4 y en otro campo un 3, lo cual se debe formar una matriz de 4x3. 
+Una vez creada la matriz, la misma se debe llenar con números enteros generados por un random (utilice números del 1 al 20). Se debe ver en pantalla la matriz creada y llena con los números. 
+Ahora, debe recorrer la matriz e indicar en pantalla cuantas filas inician (en el primer campo) con el número 5. Si no hay ninguna, debe indicar cero.
+
+2. Defina una función en donde debe crear una matriz de 5x6 que contenga números enteros generados por un random (utilice números del 1 al 20). Se debe ver en pantalla la matriz creada y llena con los números. 
+
+Ahora, escriba una función llamada encontrar_valor que reciba como parámetro la matriz generada y un valor de búsqueda (es un número entre 1 y 20). Esta función, debe de recorrer los valores que están en la matriz y retornar una lista con las ubicaciones (índice en filas y columnas) en las que el valor se encuentra dentro de la matriz. Por ejemplo, para la matriz:
+
+matriz:
+       0  1  2  3
+
+0    [[3, 8, 2, 4]
+1     [9, 4, 1, 3]
+2     [7, 6, 2, 4]
+3     [2, 4, 1, 1]]
+
+El valor 4 se encuentra en [[0,3], [1,1], [2,3] ,[3,1]]
+
+def encontrar_valor(matriz, valorBusqueda) # estos son los parámetros que deben ingresar a la función y recuerde que, DEBE RETORNAR la lista de ubicaciones.
