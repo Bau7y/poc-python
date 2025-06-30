@@ -63,6 +63,6 @@ class Bot:
             if key in self.listaCartas[0]:
                 self.listaCartas[0].remove(key)
                 return self.listaCartas
-            if val in self.listaValore[1]:
-                self.listaValores[1].remove(val)
-                return self.listaValores
+            if val in self.listaCartas[1]:
+                self.listaCartas[1].remove(val)
+                return self.listaCartas
