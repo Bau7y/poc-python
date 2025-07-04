@@ -5,9 +5,9 @@ def mostrarAltaBajaTemp(matriz, lista):
     for row in range(len(matriz)):
         for col in range(len(matriz[row])):
             if matriz[row][col] == max(lista):
-                print(f"\nLa temperatura mas alta del mes es en la semana {row+1} con: {matriz[row][col]} grados, en el día {col+1}")
+                print(f"\nLa temperatura mas alta del mes es en la semana {row+1} con: {matriz[row][col]} grados, en el día {listaDias[col]}")
             if matriz[row][col] == min(lista):
-                print(f"\nLa temperatura mas baja del mes es en la semana {row+1} con: {matriz[row][col]} grados, en el día {col+1}\n")
+                print(f"\nLa temperatura mas baja del mes es en la semana {row+1} con: {matriz[row][col]} grados, en el día {listaDias[col]}\n")
 
 
 def mostrarAltaBajaMes(matriz):
@@ -27,9 +27,9 @@ def mostrarAltaBajaSem(matriz):
     for row in range(len(matriz)):
         for col in range(len(matriz[row])):
             if matriz[row][col] == max(matriz[row]):
-                print(f"La temperatura mas alta de la semana {row+1} es: {matriz[row][col]} grados, en el día {col+1}")
+                print(f"La temperatura mas alta de la semana {row+1} es: {matriz[row][col]} grados, en el día {listaDias[col]}")
             if matriz[row][col] == min(matriz[row]):
-                print(f"La temperatura mas baja de la semana {row+1} es: {matriz[row][col]} grados, en el día {col+1}\n")
+                print(f"La temperatura mas baja de la semana {row+1} es: {matriz[row][col]} grados, en el día {listaDias[col]}\n")
             
 
 
@@ -96,4 +96,6 @@ def mnuHandler():
 
 
 if __name__ == "__main__":
+    listaDias = ["Domingo", "Lunes", "Martes", "Miercoles", "Jueves", "Viernes", "Sabado"]
     mnuHandler()
+    
