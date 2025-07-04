@@ -18,6 +18,11 @@ def mostrarAltaBajaMes(matriz):
     mostrarAltaBajaTemp(matriz, listaTemperaturas)
 
 
+def mostrarPromedio(matriz):
+    for row in range(len(matriz)):
+        print(f"El promedio de la semana {row+1} es: {sum(matriz[row])//len(matriz[row])} grados\n")
+
+
 def mostrarAltaBajaSem(matriz):
     for row in range(len(matriz)):
         for col in range(len(matriz[row])):
@@ -43,7 +48,7 @@ def showData(matriz):
             case 1:
                 mostrarAltaBajaSem(matriz)
             case 2:
-                pass
+                mostrarPromedio(matriz)
             case 3:
                 mostrarAltaBajaMes(matriz)
             case 4:
