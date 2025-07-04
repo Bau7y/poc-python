@@ -1,0 +1,29 @@
+Este ejercicio será realizado y evaluado únicamente si el estudiante está de manera presencial en la clase, incluso, aunque el docente permita que se termine el trabajo fuera de horario de clases.
+
+Utilizando matrices como estructuras de datos para gestionar la información, debe resolver lo que se le solicita en el lenguaje Python.
+
+Menú Principal.
+
+El sistema debe tener el siguiente menú principal:
+1. Generar matriz de temperaturas
+2. Ver resultados
+3. Salir
+
+Generar matriz de temperaturas:
+
+Se debe hacer una predicción de la temperatura de cada día del mes de febrero; para lo cual, debe crear una matriz de 4×7, donde 4 representa las semanas del mes y el 7 los días de cada una de esas semanas, iniciando de Lunes a Domingo.
+
+Para registrar la temperatura diaria debe generar números aleatorios comprendidos entre los 7 y 38 grados; iniciando desde la posición 0,0 de la matriz. 
+
+Seguido, cuando imprime la matriz en consola con todos los números que representan las temperaturas, por cada semana (fila) debe aparecer en color azul la temperatura más baja y en color rojo la temperatura más alta; en caso de que se repitan los números en esos dos casos, igual se pintan del color correspondiente.
+
+
+Ver resultados:
+
+Debe crear un menú con opciones para cada uno de los resultados que se solicitan:
+
+1. Mostrar la temperatura más alta y más baja de cada una de las semanas; además, indicar el día en que se produjo (lunes, martes, etc.). En caso de que hayan temperaturas repetidas, se considera la primera que se encuentre.
+2. Mostrar el promedio de temperatura de cada una de las semanas, de la siguiente manera:
+   En la semana 1 el promedio de temperatura es de 27 grados (así con todas las semanas).
+3. Mostrar la temperatura más alta de todo el mes, así como el número de la semana y el día correspondiente; por ejemplo:
+   La temperatura más alta del mes es en la semana 3 el día jueves con una temperatura de 38 grados. En caso de que haya temperaturas igual de altas en otras semanas, se imprimen todas por cada semana.
