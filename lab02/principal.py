@@ -52,7 +52,6 @@ def calcularCamino(matriz, row, dire):
                         stats["puntos"] -= 2
                     else:
                         stats["puntos"] -= 1
-
         if not encontrado:
             break
         actFila, actCol = nuevaPos
@@ -91,8 +90,6 @@ def main():
     os.system("pause")
     stats, matriz = calcularCamino(matri, row, direcciones)
     showStats(stats, matriz)
-
-
 
 
 if __name__ == "__main__":
