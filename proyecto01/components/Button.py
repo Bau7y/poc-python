@@ -16,9 +16,7 @@ class Buttons:
 
     
     def draw(self, screen):
-        pos = pygame.mouse.get_pos() # posicion del mouse
-
-        if self.rect.collidepoint(pos):
+        if self.rect.collidepoint(pygame.mouse.get_pos()):
             self.image = self.image_hover
         else:
             self.image = self.image_normal
@@ -26,9 +24,8 @@ class Buttons:
         screen.blit(self.image, self.rect)
         
 
-    def clicked(self, event_list):
-        for event in event_list:
-            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                if self.rect.collidepoint(pygame.mouse.get_pos()):
-                    return True
+    def clicked(self, event):
+        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            if self.rect.collidepoint(event.pos):
+                return True
         return False

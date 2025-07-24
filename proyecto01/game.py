@@ -2,10 +2,6 @@ import pygame
 from sys import exit
 from components.Button import Buttons
 
-
-def get_font(size):
-    return pygame.font.Font("proyecto01\images\start.png", size)
-
 pygame.init()
 tk = pygame.display.set_mode((1200, 920))
 pygame.display.set_caption("Flood")
@@ -33,7 +29,13 @@ def main_menu():
     bgQuit = scaleQuit.get_at((0, 0))
     scaleQuit.set_colorkey(bgQuit)
 
+    scaleQuitHover = pygame.image.load("proyecto01\images\quit_hover.png")
+    scaleQuitHover = pygame.transform.scale(scaleQuitHover, (250, 250))
+    bgQuitHover = scaleQuitHover.get_at((0, 0))
+    scaleQuitHover.set_colorkey(bgQuitHover)
+
     startButton = Buttons(25, 100, scaleStart, scaleHoverStart, scale=1)
+    quitButton = Buttons(110, 500, scaleQuit, scaleQuitHover, scale=1)
 
 
     while True:
@@ -43,8 +45,10 @@ def main_menu():
                 exit()
         tk.blit(frameSurface, (0, 0))
         startButton.draw(tk)
-        tk.blit(scaleQuit, (110, 300))
-
+        quitButton.draw(tk)
+        if Buttons.clicked(quitButton, event):
+            pygame.quit()
+            exit()
         pygame.display.update()
         clock.tick(60) #fps
 
