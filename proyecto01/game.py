@@ -2,6 +2,7 @@ import pygame
 from sys import exit
 from components.Button import Buttons
 
+
 def get_font(size):
     return pygame.font.Font("proyecto01\images\start.png", size)
 
@@ -22,22 +23,26 @@ def main_menu():
     bgStart = scaleStart.get_at((0, 0))
     scaleStart.set_colorkey(bgStart)
 
+    scaleHoverStart = pygame.image.load("proyecto01\images\start_hover.png")
+    scaleHoverStart = pygame.transform.scale(scaleHoverStart, (350, 350))
+    bgHoverStart = scaleHoverStart.get_at((0, 0))
+    scaleHoverStart.set_colorkey(bgHoverStart)
+
     scaleQuit = pygame.image.load("proyecto01\images\quitScale.png")
     scaleQuit = pygame.transform.scale(scaleQuit, (250, 250))
     bgQuit = scaleQuit.get_at((0, 0))
     scaleQuit.set_colorkey(bgQuit)
 
+    startButton = Buttons(25, 100, scaleStart, scaleHoverStart, scale=1)
+
 
     while True:
-        mousePos = pygame.mouse.get_pos()
-        
-        #startButton = Buttons(image=scaleStart, pos=(428,100), text="", font=get_font(75), base_color="Blue", hover_color="White")
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 exit()
         tk.blit(frameSurface, (0, 0))
-        tk.blit(scaleStart, (25, 100))
+        startButton.draw(tk)
         tk.blit(scaleQuit, (110, 300))
 
         pygame.display.update()

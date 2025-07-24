@@ -2,7 +2,7 @@ import pygame
 
 class Buttons:
     def __init__(self, x, y, image_normal, image_hover, scale=1):
-        self.image = pygame.transform.scale(image_normal, (
+        self.image_normal = pygame.transform.scale(image_normal, (
             int(image_normal.get_width() * scale),
             int(image_normal.get_height() * scale)
         ))
@@ -13,7 +13,6 @@ class Buttons:
         self.image = self.image_normal
         self.rect = self.image.get_rect(topleft=(x, y))
         self.clicked = False
-
 
     
     def draw(self, screen):
