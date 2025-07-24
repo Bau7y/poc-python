@@ -6,6 +6,17 @@ pygame.init()
 tk = pygame.display.set_mode((1200, 920))
 pygame.display.set_caption("Flood")
 
+def game():
+    tk.fill("black")
+
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                exit()
+        pygame.display.update()
+
+
 def main_menu():
     icon = pygame.image.load("proyecto01\images\icon.png")
     pygame.display.set_icon(icon)
@@ -49,6 +60,8 @@ def main_menu():
         if Buttons.clicked(quitButton, event):
             pygame.quit()
             exit()
+        elif Buttons.clicked(startButton, event):
+            game()
         pygame.display.update()
         clock.tick(60) #fps
 
