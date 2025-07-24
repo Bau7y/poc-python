@@ -1,9 +1,12 @@
 import pygame
 from sys import exit
-from components import Button
+from components.Button import Buttons
+
+def get_font(size):
+    return pygame.font.Font("proyecto01\images\start.png", size)
 
 pygame.init()
-tk = pygame.display.set_mode((1200, 800))
+tk = pygame.display.set_mode((1200, 920))
 pygame.display.set_caption("Flood")
 
 def main_menu():
@@ -11,10 +14,8 @@ def main_menu():
     pygame.display.set_icon(icon)
     clock = pygame.time.Clock()
 
-    frameSurface = pygame.image.load("proyecto01\images\menuFrame.png") 
-    frameSurface = pygame.transform.scale(frameSurface, (1200, 800))
-    bg = frameSurface.get_at((0, 0))
-    frameSurface.set_colorkey(bg)
+    frameSurface = pygame.image.load("proyecto01\images\menuFrame2.png") 
+    frameSurface = pygame.transform.scale(frameSurface, (1200, 920))
 
     scaleStart = pygame.image.load("proyecto01\images\start.png")
     scaleStart = pygame.transform.scale(scaleStart, (350, 350))
@@ -30,13 +31,14 @@ def main_menu():
     while True:
         mousePos = pygame.mouse.get_pos()
         
-        
+        #startButton = Buttons(image=scaleStart, pos=(428,100), text="", font=get_font(75), base_color="Blue", hover_color="White")
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
+                pygame.quit()
                 exit()
-        tk.blit(frameSurface, (55, 7))
-        tk.blit(scaleStart, (428, 100))
-        tk.blit(scaleQuit, (522, 300))
+        tk.blit(frameSurface, (0, 0))
+        tk.blit(scaleStart, (25, 100))
+        tk.blit(scaleQuit, (110, 300))
 
         pygame.display.update()
         clock.tick(60) #fps
