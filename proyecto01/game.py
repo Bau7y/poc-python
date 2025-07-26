@@ -6,6 +6,7 @@ pygame.init()
 tk = pygame.display.set_mode((1200, 920))
 pygame.display.set_caption("Flood")
 
+
 def game():
     tk.fill("black")
 
