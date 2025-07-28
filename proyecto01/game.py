@@ -1,6 +1,7 @@
 import pygame
 from sys import exit
 from components.Button import Buttons
+from components.Player import Player
 
 pygame.init()
 tk = pygame.display.set_mode((1200, 920))
@@ -9,8 +10,8 @@ clock = pygame.time.Clock()
 
 def spriteCreat(image):
     spriteFrames = []
-    for sheet in range(4):
-        frame = image.subsurface(pygame.Rect(sheet * 64, 0, 64, 64))
+    for sheet in range(3):
+        frame = image.subsurface(pygame.Rect(sheet * 32, 0, 32, 32))
         spriteFrames.append(frame)
     return spriteFrames
 
@@ -30,6 +31,7 @@ def game():
     contador = 0
 
     player_x, player_y = sceneWidth // 2, sceneHeight // 2
+    mainPlayer = Player(scenario, tk, player)
 
     while(True):
         dt = clock.tick(60)
@@ -37,33 +39,7 @@ def game():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 exit()
-        teclas = pygame.key.get_pressed()
-        moving = False
-
-        if teclas[pygame.K_a]:
-            player_x -= velocidad
-            moving = True
-        if teclas[pygame.K_d]:
-            player_x += velocidad
-            moving = True
-        if teclas[pygame.K_w]:
-            player_y -= velocidad
-            moving = True
-        if teclas[pygame.K_s]:
-            player_y += velocidad
-            moving = True
-        # pos con bordes
-        player_x = max(0, min(sceneWidth, player_x))
-        player_y = max(0, min(sceneHeight, player_y))
-
-        scroll_x = player_x - tk.get_width() // 2
-        scroll_y = player_y - tk.get_height() // 2
-
-        scroll_x = max(0, min(sceneWidth - tk.get_width(), scroll_x))
-        scroll_y = max(0, min(sceneHeight - tk.get_height(), scroll_y))
-        tk.blit(scenario, (-scroll_x, -scroll_y))
-        tk.blit(player, (player_x - scroll_x, player_y - scroll_y))
-
+        mainPlayer.movimiento()
 
 
         pygame.display.update()
