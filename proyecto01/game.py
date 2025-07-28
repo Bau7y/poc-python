@@ -10,8 +10,8 @@ clock = pygame.time.Clock()
 
 def spriteCreat(image):
     spriteFrames = []
-    for sheet in range(3):
-        frame = image.subsurface(pygame.Rect(sheet * 32, 0, 32, 32))
+    for sheet in range(4):
+        frame = image.subsurface(pygame.Rect(sheet * 64, 0, 64, 64))
         spriteFrames.append(frame)
     return spriteFrames
 
@@ -21,16 +21,6 @@ def game():
     scenario = pygame.image.load("proyecto01\images\escenarioArriba.png").convert()
     sceneWidth, sceneHeight = scenario.get_size()
     player = pygame.image.load("proyecto01\images\personaje_1Act.png").convert_alpha()
-    playerIzqImage = pygame.image.load("proyecto01\images\caminaIzquierda.png").convert_alpha()
-    playerDerImage = pygame.image.load("proyecto01\images\caminaDerecha.png").convert_alpha()
-    framesIzq = spriteCreat(playerIzqImage)
-    framesDer = spriteCreat(playerDerImage)
-    velocidad = 5
-    frame = 0 
-    frame_rate = 10
-    contador = 0
-
-    player_x, player_y = sceneWidth // 2, sceneHeight // 2
     mainPlayer = Player(scenario, tk, player)
 
     while(True):
