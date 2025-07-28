@@ -1,19 +1,31 @@
-class Buttons:
-    def __init__(self, x, y, image, image_hover, scale=1):
-        pass
-    
-    def update(self, screen):
-        if self.image is not None:
-            screen.blit(self.image, self.rect)
-        screen.blit(self.text, self.text_rect)
+import pygame
 
-    def checkInput(self, position):
-        if position[0] in range(self.rect.left, self.rect.right) and position[1] in range(self.rect.top, self.rect.bottom):
-            return True
-        return False
+class Buttons:
+    def __init__(self, x, y, image_normal, image_hover, scale=1):
+        self.image_normal = pygame.transform.scale(image_normal, (
+            int(image_normal.get_width() * scale),
+            int(image_normal.get_height() * scale)
+        ))
+        self.image_hover = pygame.transform.scale(image_hover, (
+            int(image_hover.get_width() * scale),
+            int(image_hover.get_height() * scale)
+        ))
+        self.image = self.image_normal
+        self.rect = self.image.get_rect(topleft=(x, y))
+        self.clicked = False
+
     
-    def changeColor(self, position):
-        if position[0] in range(self.rect.left, self.rect.right) and position[1] in range(self.rect.top, self.rect.bottom):
-            self.text = self.font.render(self.text_input, True, self.hover_color)
+    def draw(self, screen):
+        if self.rect.collidepoint(pygame.mouse.get_pos()):
+            self.image = self.image_hover
         else:
-            self.text = self.font.render(self.text_input, True, self.base_color)
+            self.image = self.image_normal
+
+        screen.blit(self.image, self.rect)
+        
+
+    def clicked(self, event):
+        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            if self.rect.collidepoint(event.pos):
+                return True
+        return False
