@@ -5,16 +5,129 @@ from components.Button import Buttons
 pygame.init()
 tk = pygame.display.set_mode((1200, 920))
 pygame.display.set_caption("Flood")
+clock = pygame.time.Clock()
+
+def spriteCreat(image):
+    spriteFrames = []
+    for sheet in range(4):
+        frame = image.subsurface(pygame.Rect(sheet * 64, 0, 64, 64))
+        spriteFrames.append(frame)
+    return spriteFrames
+
 
 
 def game():
-    tk.fill("black")
+    scenario = pygame.image.load("proyecto01\images\escenarioArriba.png").convert()
+    sceneWidth, sceneHeight = scenario.get_size()
+    player = pygame.image.load("proyecto01\images\personaje_1Act.png").convert_alpha()
+    playerIzqImage = pygame.image.load("proyecto01\images\caminaIzquierda.png").convert_alpha()
+    playerDerImage = pygame.image.load("proyecto01\images\caminaDerecha.png").convert_alpha()
+    framesIzq = spriteCreat(playerIzqImage)
+    framesDer = spriteCreat(playerDerImage)
+    velocidad = 5
+    frame = 0 
+    frame_rate = 10
+    contador = 0
 
-    while True:
+    player_x, player_y = sceneWidth // 2, sceneHeight // 2
+
+    while(True):
+        dt = clock.tick(60)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 exit()
+        teclas = pygame.key.get_pressed()
+        moving = False
+
+        if teclas[pygame.K_a]:
+            player_x -= velocidad
+            moving = True
+        if teclas[pygame.K_d]:
+            player_x += velocidad
+            moving = True
+        if teclas[pygame.K_w]:
+            player_y -= velocidad
+            moving = True
+        if teclas[pygame.K_s]:
+            player_y += velocidad
+            moving = True
+        # pos con bordes
+        player_x = max(0, min(sceneWidth, player_x))
+        player_y = max(0, min(sceneHeight, player_y))
+
+        scroll_x = player_x - tk.get_width() // 2
+        scroll_y = player_y - tk.get_height() // 2
+
+        scroll_x = max(0, min(sceneWidth - tk.get_width(), scroll_x))
+        scroll_y = max(0, min(sceneHeight - tk.get_height(), scroll_y))
+        tk.blit(scenario, (-scroll_x, -scroll_y))
+        tk.blit(player, (player_x - scroll_x, player_y - scroll_y))
+
+
+
+        pygame.display.update()
+
+def history():
+    tk.fill("black")
+    font = pygame.font.SysFont("Arial", 30)
+    historia = ["Año 2130. La humanidad lucha por sobrevivir bajo tierra.",
+                "Después de la gran inundación, todo cambió.",
+                "Los bunkers se convirtieron en el único refugio seguro...",
+                "Pero incluso ahí, no todos están a salvo."
+            ]
+    indexActual = 0
+    alpha = 0 
+    fading_in = True
+    fading_out = False
+    text_surface = font.render(historia[indexActual], True, (255,255,255))
+    show_menu = True 
+    fade_menu_alpha = 255
+    menu_surface = pygame.Surface((800, 600))
+    menu_surface.fill((0,0,0))
+    menu_text = font.render("Presiona Enter para comenzar...", True, (255,255,255))
+    menu_surface.blit(menu_text, (200,200))
+    menu_surface.set_alpha(fade_menu_alpha)
+    while True:
+        dt = clock.tick(60)
+        tk.fill((0,0,0))
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                exit()
+            if show_menu and event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
+                show_menu = False
+        if show_menu:
+            tk.blit(menu_surface, (0,0))
+        else:
+            if fade_menu_alpha > 0:
+                fade_menu_alpha -= 5
+                menu_surface.set_alpha(fade_menu_alpha)
+                tk.blit(menu_surface, (0,0))
+            else:
+                text_surface = font.render(historia[indexActual], True, (255,255,255))
+                faded_text = text_surface.copy()
+                faded_text.set_alpha(alpha)
+                tk.blit(faded_text, (100, 280))
+                if fading_in:
+                    alpha += 3
+                    if alpha >= 255:
+                        alpha = 255
+                        fading_in = False
+                        pygame.time.set_timer(pygame.USEREVENT, 3000) #tiempo en ms
+                elif fading_out:
+                    alpha -= 3
+                    if alpha <= 0:
+                        alpha = 0 
+                        fading_out = False
+                        fading_in = True
+                        indexActual += 1
+                        if indexActual >= len(historia) - 1:
+                            game()
+            if event.type == pygame.USEREVENT:
+                fading_out = True
+                pygame.time.set_timer(pygame.USEREVENT, 0)
+
         pygame.display.update()
 
 
@@ -62,7 +175,7 @@ def main_menu():
             pygame.quit()
             exit()
         elif Buttons.clicked(startButton, event):
-            game()
+            history()
         pygame.display.update()
         clock.tick(60) #fps
 
