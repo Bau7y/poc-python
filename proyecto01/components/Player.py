@@ -1,4 +1,5 @@
-import pygame, math
+import pygame
+from collections import Counter
 
 class Player:
     def __init__(self, screen):
@@ -37,12 +38,30 @@ class Player:
         # Posición inicial 
         self.player_x, self.player_y = 0, 0
 
-        # Cooldown para portal
+        # Cooldown para el gate
         self.portal_cd = 0
 
-        # Cargar escena por primera vez
+        # Cargar escena 1era
         self.cargar_escena("arriba")
         self.player_x, self.player_y = self.width // 2, self.height // 2
+
+        #inventario
+        self.inventario = Counter({"venda": 1, "medkit": 1})
+
+
+    def add_item(self, item, qty=1):
+        self.inventario[item] += qty
+
+    def has_item(self, item, qty=1):
+        return self.inventario.get(item, 0) >= qty
+    
+    def remove_item(self, item, qty=1):
+        if self.has_item(item, qty):
+            self.inventario[item] -= qty
+            if self.inventario[item] <= 0:
+                del self.inventario[item]
+            return True
+        return False
 
     def get_player_rect(self):
         return pygame.Rect(int(self.player_x), int(self.player_y), self.player_w, self.player_h)
@@ -177,7 +196,9 @@ class Player:
                 self.contador = 0
                 self.frame = (self.frame + 1) % len(self.direcciones[self.dire])
         else:
+            self.dire = "down"
             self.frame = 0
+
 
         self.screen.blit(self.direcciones[self.dire][self.frame],
                          (self.player_x - self.scroll_x, self.player_y - self.scroll_y))
