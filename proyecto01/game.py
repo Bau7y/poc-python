@@ -7,32 +7,19 @@ pygame.init()
 tk = pygame.display.set_mode((1200, 920))
 pygame.display.set_caption("Flood")
 clock = pygame.time.Clock()
-
-def spriteCreat(image):
-    spriteFrames = []
-    for sheet in range(4):
-        frame = image.subsurface(pygame.Rect(sheet * 64, 0, 64, 64))
-        spriteFrames.append(frame)
-    return spriteFrames
-
+escenarioActual = "arriba"
 
 
 def game():
-    scenario = pygame.image.load("proyecto01\images\escenarioArriba.png").convert()
-    sceneWidth, sceneHeight = scenario.get_size()
-    player = pygame.image.load("proyecto01\images\personaje_1Act.png").convert_alpha()
-    mainPlayer = Player(scenario, tk, player)
-
+    mainPlayer = Player(tk)
     while(True):
-        dt = clock.tick(60)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 exit()
         mainPlayer.movimiento()
-
-
         pygame.display.update()
+        clock.tick(60)
 
 def history():
     tk.fill("black")
@@ -88,7 +75,7 @@ def history():
                         fading_out = False
                         fading_in = True
                         indexActual += 1
-                        if indexActual >= len(historia) - 1:
+                        if indexActual >= len(historia):
                             game()
             if event.type == pygame.USEREVENT:
                 fading_out = True
@@ -102,7 +89,7 @@ def main_menu():
     pygame.display.set_icon(icon)
     clock = pygame.time.Clock()
 
-    frameSurface = pygame.image.load("proyecto01\images\menuFrame2.png") 
+    frameSurface = pygame.image.load("proyecto01\images\menu.jpeg") 
     frameSurface = pygame.transform.scale(frameSurface, (1200, 920))
 
     scaleStart = pygame.image.load("proyecto01\images\start.png")
