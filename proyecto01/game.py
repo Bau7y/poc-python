@@ -20,6 +20,7 @@ def game():
         mainPlayer.movimiento()
         pygame.display.update()
         clock.tick(60)
+        
 
 def history():
     tk.fill("black")
@@ -42,7 +43,6 @@ def history():
     menu_surface.blit(menu_text, (200,200))
     menu_surface.set_alpha(fade_menu_alpha)
     while True:
-        dt = clock.tick(60)
         tk.fill((0,0,0))
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -82,32 +82,33 @@ def history():
                 pygame.time.set_timer(pygame.USEREVENT, 0)
 
         pygame.display.update()
+        clock.tick(60)
 
 
 def main_menu():
-    icon = pygame.image.load("proyecto01\images\icon.png")
+    icon = pygame.image.load(r"proyecto01\images\icon.png")
     pygame.display.set_icon(icon)
     clock = pygame.time.Clock()
 
-    frameSurface = pygame.image.load("proyecto01\images\menu.jpeg") 
+    frameSurface = pygame.image.load(r"proyecto01\images\menu.jpeg") 
     frameSurface = pygame.transform.scale(frameSurface, (1200, 920))
 
-    scaleStart = pygame.image.load("proyecto01\images\start.png")
+    scaleStart = pygame.image.load(r"proyecto01\images\start.png")
     scaleStart = pygame.transform.scale(scaleStart, (350, 350))
     bgStart = scaleStart.get_at((0, 0))
     scaleStart.set_colorkey(bgStart)
 
-    scaleHoverStart = pygame.image.load("proyecto01\images\start_hover.png")
+    scaleHoverStart = pygame.image.load(r"proyecto01\images\start_hover.png")
     scaleHoverStart = pygame.transform.scale(scaleHoverStart, (350, 350))
     bgHoverStart = scaleHoverStart.get_at((0, 0))
     scaleHoverStart.set_colorkey(bgHoverStart)
 
-    scaleQuit = pygame.image.load("proyecto01\images\quitScale.png")
+    scaleQuit = pygame.image.load(r"proyecto01\images\quitScale.png")
     scaleQuit = pygame.transform.scale(scaleQuit, (250, 250))
     bgQuit = scaleQuit.get_at((0, 0))
     scaleQuit.set_colorkey(bgQuit)
 
-    scaleQuitHover = pygame.image.load("proyecto01\images\quit_hover.png")
+    scaleQuitHover = pygame.image.load(r"proyecto01\images\quit_hover.png")
     scaleQuitHover = pygame.transform.scale(scaleQuitHover, (250, 250))
     bgQuitHover = scaleQuitHover.get_at((0, 0))
     scaleQuitHover.set_colorkey(bgQuitHover)
