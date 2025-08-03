@@ -1,5 +1,6 @@
 import pygame
 from collections import Counter
+from components.Interact import Interact
 
 class Player:
     def __init__(self, screen):
@@ -46,7 +47,9 @@ class Player:
         self.player_x, self.player_y = self.width // 2, self.height // 2
 
         #inventario
-        self.inventario = Counter({"venda": 1, "medkit": 1})
+        self.inventario = Counter({"venda": 1, "medKit": 1, "CO2": 1, "agua": 1, "canasta": 1, "pildora": 1})
+
+        self.font = pygame.font.Font(None, 24)
 
 
     def add_item(self, item, qty=1):
@@ -65,9 +68,21 @@ class Player:
 
     def get_player_rect(self):
         return pygame.Rect(int(self.player_x), int(self.player_y), self.player_w, self.player_h)
+    
 
     def cargar_escena(self, nombre):
+        self.npcs = []
         self.escena = nombre
+        npcImg1 = pygame.image.load(r"proyecto01\images\personajeNpc1.png").convert_alpha()
+        npc = Interact(
+            rect=pygame.Rect(700, 500, 50, 50),
+            name="Paciente A",
+            required_item="venda",
+            img= npcImg1,
+            thanks_msg="Gracias por la venda",
+            request_msg="Necesito una venda"
+        )
+        self.npcs.append(npc)
 
         if nombre == "arriba":
             self.image = pygame.image.load(r"proyecto01\images\escenarioArriba.png").convert()
@@ -93,8 +108,12 @@ class Player:
         pared_sup = pygame.Rect(0, 0, self.width, pared)
         pared_izq = pygame.Rect(0, 0, pared, self.height)
         pared_der = pygame.Rect(self.width - pared, 0, pared, self.height)
+        camas_derAbajo = pygame.Rect(900, 800, 130, 250)
+        camas_derArriba = pygame.Rect(800, 230, 400, 250)
+        muro_abajo = pygame.Rect(600, 1000, 700, 200)
 
-        self.obstaculos = [muro_izq, muro_der, pared_sup, pared_izq, pared_der]
+        if self.escena == "arriba": self.obstaculos = [muro_izq, muro_der, pared_sup, pared_izq, pared_der, npc.block_rect, camas_derAbajo, camas_derArriba, muro_abajo]
+        else: self.obstaculos = [muro_izq, muro_der, pared_sup, pared_izq, pared_der]
 
         # Trigger de cambio
         self.trigger_bajar = pygame.Rect(
@@ -129,6 +148,19 @@ class Player:
                 elif dy < 0: rect.top    = o.bottom
 
         self.player_x, self.player_y = rect.x, rect.y
+
+
+    def get_use_zone(self, player_rect, facing, area=40):
+        if facing == "up":
+            return pygame.Rect(player_rect.centerx - 12, player_rect.top - area, 24, area)
+        elif facing == "down":
+            return pygame.Rect(player_rect.centerx - 12, player_rect.bottom, 24, area)
+        elif facing == "left":
+            return pygame.Rect(player_rect.left - area, player_rect.centery, area, player_rect.height)
+        elif facing == "right":
+            return pygame.Rect(player_rect.right, player_rect.centery - 12, area, 24)
+        return player_rect.copy()
+        
 
     def movimiento(self):
         dx = dy = 0
@@ -178,8 +210,23 @@ class Player:
         self.scroll_x = max(0, min(self.width  - self.screen.get_width(),  self.scroll_x))
         self.scroll_y = max(0, min(self.height - self.screen.get_height(), self.scroll_y))
 
+        #npc colision
+        use_zone = self.get_use_zone(player_rect, self.dire, 40)
+        candidato = None
+
+        for npc in self.npcs:
+            if npc.enabled and npc.block_rect.colliderect(use_zone):
+                candidato = npc
+                break;
+        
+        if candidato:
+            prompt = self.font.render(f"[E] {candidato.request_msg}", True, (255, 255, 255))
+            self.screen.blit(prompt, (candidato.rect.centerx - self.scroll_x - 6,
+                                      candidato.rect.top - 18 - self.scroll_y))
+
         #blits o draws
         self.screen.blit(self.image, (-self.scroll_x, -self.scroll_y))
+        for npc in self.npcs: npc.draw(self.screen, self.scroll_x, self.scroll_y)
 
         if self.debug:
             def draw_rect(r, color=(255, 0, 0, 120)):
