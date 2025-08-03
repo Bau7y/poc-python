@@ -6,9 +6,9 @@ class Player:
     def __init__(self, screen):
         self.screen = screen
         self.velocidad = 8
-        self.player_w = 300
-        self.player_h = 300
-        self.debug = True
+        self.player_w = 75
+        self.player_h = 125
+        self.debug = False
 
         # Estado animación / dirección
         self.dire = "down"
@@ -74,18 +74,17 @@ class Player:
         self.npcs = []
         self.escena = nombre
         npcImg1 = pygame.image.load(r"proyecto01\images\personajeNpc1.png").convert_alpha()
-        npc = Interact(
-            rect=pygame.Rect(700, 500, 50, 50),
+        if nombre == "arriba":
+            self.image = pygame.image.load(r"proyecto01\images\escenarioArriba.png").convert()
+            npc = Interact(
+            rect=pygame.Rect(300, 500, 50, 50),
             name="Paciente A",
             required_item="venda",
             img= npcImg1,
             thanks_msg="Gracias por la venda",
             request_msg="Necesito una venda"
-        )
-        self.npcs.append(npc)
-
-        if nombre == "arriba":
-            self.image = pygame.image.load(r"proyecto01\images\escenarioArriba.png").convert()
+            )
+            self.npcs.append(npc)
         elif nombre == "abajo":
             self.image = pygame.image.load(r"proyecto01\images\escenarioAbajo.png").convert()
         else:
@@ -99,21 +98,35 @@ class Player:
         cx = self.width // 2
 
         muro_izq = pygame.Rect(0, self.height - muro_grosor,
-                               cx - puerta_ancho // 2, muro_grosor)
-        muro_der = pygame.Rect(cx + puerta_ancho // 2, self.height - muro_grosor,
-                               self.width - (cx + puerta_ancho // 2), muro_grosor)
+                               cx - puerta_ancho // 2 + 30, muro_grosor)
+        muro_der = pygame.Rect(cx + puerta_ancho // 2 - 30, self.height - muro_grosor,
+                               self.width - (cx + puerta_ancho // 2) + 30, muro_grosor)
 
         # Paredes perimetrales
         pared = 24
         pared_sup = pygame.Rect(0, 0, self.width, pared)
-        pared_izq = pygame.Rect(0, 0, pared, self.height)
-        pared_der = pygame.Rect(self.width - pared, 0, pared, self.height)
-        camas_derAbajo = pygame.Rect(900, 800, 130, 250)
-        camas_derArriba = pygame.Rect(800, 230, 400, 250)
-        muro_abajo = pygame.Rect(600, 1000, 700, 200)
+        pared_izq = pygame.Rect(0, 0, pared + 25, self.height)
+        pared_der = pygame.Rect(self.width - pared - 30, 0, pared + 28, self.height)
 
-        if self.escena == "arriba": self.obstaculos = [muro_izq, muro_der, pared_sup, pared_izq, pared_der, npc.block_rect, camas_derAbajo, camas_derArriba, muro_abajo]
-        else: self.obstaculos = [muro_izq, muro_der, pared_sup, pared_izq, pared_der]
+        #hitboxes arriba
+        camas_der_abajo = pygame.Rect(938, 750, 200, 400)
+        camas_der_arriba = pygame.Rect(750, 300, 440, 270)
+        camilla_arriba = pygame.Rect(530, 300, 210, 300)
+        muro_puerta = pygame.Rect(0, 320, 600, 10)
+        muroA_abajo_der = pygame.Rect(700, 1040, 499, 190)
+        muroA_abajo_izq = pygame.Rect(0, 1040, 499, 189)
+
+        #hitboxes abajo
+        muroB_abajo_der = pygame.Rect(700, 1590, 499, 190)
+        muroB_abajo_izq = pygame.Rect(0, 1590, 499, 189)
+        camas_izq_abajo = pygame.Rect(130, 1180, 220, 280)
+        camas_izq_arriba = pygame.Rect(100, 670, 250, 230)
+        camas_der = pygame.Rect(810, 810, 260, 650)
+        muro_pared = pygame.Rect(0, 450, self.width, pared)
+        camilla_abajo = pygame.Rect(self.width // 2 - 100, 470, 200, 180)
+
+        if self.escena == "arriba": self.obstaculos = [muro_izq, muro_der, pared_sup, pared_izq, pared_der, npc.block_rect, camas_der_abajo, camas_der_arriba, muroA_abajo_der, muroA_abajo_izq, camilla_arriba, muro_puerta]
+        else: self.obstaculos = [muro_izq, muro_der, pared_sup, pared_izq, pared_der, camas_izq_abajo, muroB_abajo_der, muroB_abajo_izq, muro_pared, camas_izq_arriba, camas_der, camilla_abajo]
 
         # Trigger de cambio
         self.trigger_bajar = pygame.Rect(
@@ -188,17 +201,17 @@ class Player:
         if self.portal_cd == 0 and self.escena == "arriba" and player_rect.colliderect(self.trigger_bajar):
             self.cargar_escena("abajo")
             cx = self.width // 2
-            self.player_x = cx - self.player_w // 2 - 70
-            self.player_y = self.height - self.player_h - 24
-            self.portal_cd = 50  # ~ 10 frames
+            self.player_x = cx - self.player_w // 2
+            self.player_y = self.height - self.player_h + 40
+            self.portal_cd = 100  # ~ 10 frames
 
         # De abajo - arriba
         elif self.portal_cd == 0 and self.escena == "abajo" and self.trigger_bajar and player_rect.colliderect(self.trigger_bajar):
             self.cargar_escena("arriba")
             cx = self.width // 2
-            self.player_x = cx - self.player_w // 2 - 70
-            self.player_y = self.height - 24 - self.player_h - 4
-            self.portal_cd = 50
+            self.player_x = cx - self.player_w // 2
+            self.player_y = self.height - 24 - self.player_h + 40
+            self.portal_cd = 100
 
         # Clamps
         self.player_x = max(0, min(self.width  - self.player_w,  self.player_x))
