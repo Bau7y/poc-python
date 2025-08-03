@@ -75,7 +75,7 @@ def history():
                         fading_out = False
                         fading_in = True
                         indexActual += 1
-                        if indexActual >= len(historia):
+                        if indexActual >= len(historia)-3:
                             game()
             if event.type == pygame.USEREVENT:
                 fading_out = True
