@@ -2,8 +2,8 @@ import pygame
 
 
 class Interact:
-    def __init__(self, rect, name, required_item, img=None, request_msg = "Press E to interact",
-        thanks_msg = "Thanks for the item",):
+    def __init__(self, rect, name, required_item, img=None, request_msg = "Podrías traerme algo?",
+        thanks_msg = "Gracias!"):
         self.rect = rect
         self.name = name
         self.required_item = required_item
@@ -21,28 +21,24 @@ class Interact:
     def draw(self, screen, scroll_x, scroll_y):
         if self.visible and self.image:
             screen.blit(self.image, (self.rect.x - scroll_x, self.rect.y - scroll_y))
+            
 
     def try_interact(self, player):
         if not self.enabled:
             return False
-
-        if player.has_item(self.required_item):
-            if not self.enabled:
-                return None
-            
-            #primer request
-            if not self.has_requested:
-                self.has_requested = True
-                return f"{self.name}: {self.request_msg}"
+        
+        #primer request
+        if not self.has_requested:
+            self.has_requested = True
+            return f"{self.name}: {self.request_msg}"
             
             #pedido, agregar 
-            if player.has_item(self.required_item):
-                player.remove_item(self.required_item, 1)
-                self.completed = True
-                self.enabled = False
-                self.visible = False
-
-                if hasattr(player, "obstaculos") and self.block_rect in player.obstaculos:
-                    player.obstaculos.remove(self.block_rect)
-                return f"{self.name}: {self.thanks_msg}"
-            return f"Aún necesito {self.required_item}"
+        if player.has_item(self.required_item):
+            player.remove_item(self.required_item, 1)
+            self.completed = True
+            self.enabled = False
+            self.visible = False
+            if hasattr(player, "obstaculos") and self.block_rect in player.obstaculos:
+                player.obstaculos.remove(self.block_rect)
+            return f"{self.name}: {self.thanks_msg}"
+        return f"Aún necesito {self.required_item}"
