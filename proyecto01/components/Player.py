@@ -1,6 +1,7 @@
 import pygame
 from collections import Counter
 from components.Interact import Interact
+from components.Mesa import *
 
 class Player:
     def __init__(self, screen):
@@ -15,6 +16,7 @@ class Player:
         self.frame = 0
         self.contador = 0
         self.frame_rate = 4
+        self.stats = {"puntos": 0}
 
         # Cargar sprites una sola vez
         self.direcciones = {
@@ -47,13 +49,14 @@ class Player:
         self.player_x, self.player_y = self.width // 2, self.height // 2
 
         #inventario
-        self.inventario = Counter({"venda": 1, "medKit": 1, "CO2": 1, "agua": 1, "canasta": 1, "pildora": 1})
+        self.inventario = Counter({})
 
-        self.font = pygame.font.Font(None, 24)
+        self.font = pygame.font.SysFont("Arial", 24)
 
 
-    def add_item(self, item, qty=1):
-        self.inventario[item] += qty
+    def add_item(self, item, valor):
+        self.inventario[item] += valor
+        self.stats["puntos"] += valor
 
     def has_item(self, item, qty=1):
         return self.inventario.get(item, 0) >= qty
@@ -71,20 +74,23 @@ class Player:
     
 
     def cargar_escena(self, nombre):
+        self.interactables = []
         self.npcs = []
+        self.estado = "jugando"
         self.escena = nombre
         npcImg1 = pygame.image.load(r"proyecto01\images\personajeNpc1.png").convert_alpha()
         if nombre == "arriba":
             self.image = pygame.image.load(r"proyecto01\images\escenarioArriba.png").convert()
             npc = Interact(
-            rect=pygame.Rect(300, 500, 50, 50),
-            name="Paciente A",
-            required_item="venda",
-            img= npcImg1,
-            thanks_msg="Gracias por la venda",
-            request_msg="Necesito una venda"
+                rect=pygame.Rect(300, 500, 20, 20),
+                name="Paciente A",
+                required_item="venda",
+                img= npcImg1,
+                thanks_msg="Gracias por la venda",
+                request_msg="Necesito una venda"
             )
             self.npcs.append(npc)
+            print("Npcs cargados: ", [npc.name for npc in self.npcs])
         elif nombre == "abajo":
             self.image = pygame.image.load(r"proyecto01\images\escenarioAbajo.png").convert()
         else:
@@ -115,6 +121,7 @@ class Player:
         muro_puerta = pygame.Rect(0, 320, 600, 10)
         muroA_abajo_der = pygame.Rect(700, 1040, 499, 190)
         muroA_abajo_izq = pygame.Rect(0, 1040, 499, 189)
+        mesa_interact = pygame.Rect(100, 655, 200, 90)
 
         #hitboxes abajo
         muroB_abajo_der = pygame.Rect(700, 1590, 499, 190)
@@ -125,7 +132,46 @@ class Player:
         muro_pared = pygame.Rect(0, 450, self.width, pared)
         camilla_abajo = pygame.Rect(self.width // 2 - 100, 470, 200, 180)
 
-        if self.escena == "arriba": self.obstaculos = [muro_izq, muro_der, pared_sup, pared_izq, pared_der, npc.block_rect, camas_der_abajo, camas_der_arriba, muroA_abajo_der, muroA_abajo_izq, camilla_arriba, muro_puerta]
+         #objetos
+        objCO2 = pygame.image.load(r"proyecto01\images\bombonaOxigeno.png").convert_alpha()
+        objCO2 = pygame.transform.scale(objCO2, (300, 300))
+        bgCO2 = objCO2.get_at((0, 0))
+        objCO2.set_colorkey(bgCO2)
+        objVenda = pygame.image.load(r"proyecto01\images\venda.png").convert_alpha()
+        objVenda = pygame.transform.scale(objVenda, (300, 300))
+        bgVenda = objVenda.get_at((0, 0))
+        objVenda.set_colorkey(bgVenda)
+        objPill = pygame.image.load(r"proyecto01\images\pill.png").convert_alpha()
+        objPill = pygame.transform.scale(objPill, (300, 300))
+        bgPill = objPill.get_at((0, 0))
+        objPill.set_colorkey(bgPill)
+        objWater = pygame.image.load(r"proyecto01\images\botellaAgua.png").convert_alpha()
+        objWater = pygame.transform.scale(objWater, (300, 300))
+        bgWater = objWater.get_at((0, 0))
+        objWater.set_colorkey(bgWater)
+        objBotiquin = pygame.image.load(r"proyecto01\images\botiquin.png").convert_alpha()
+        objBotiquin = pygame.transform.scale(objBotiquin, (300, 300))
+        bgBotiquin = objBotiquin.get_at((0, 0))
+        objBotiquin.set_colorkey(bgBotiquin)
+        objCanasta = pygame.image.load(r"proyecto01\images\canasta.png").convert_alpha()
+        objCanasta = pygame.transform.scale(objCanasta, (300, 300))
+        bgCanasta = objCanasta.get_at((0, 0))
+        objCanasta.set_colorkey(bgCanasta)
+
+        mesa = MesaInteractuable(
+            rect=pygame.Rect(100, 655, 200, 90),
+            objetos=[
+                ObjetoInteractivo(imagen=objCO2, nombre="CO2", valor=150, pos_ui=(100, 100)),
+                ObjetoInteractivo(imagen=objVenda, nombre="venda", valor=60, pos_ui=(400, 100)),
+                ObjetoInteractivo(imagen=objPill, nombre="pildora", valor=70, pos_ui=(700, 100)),
+                ObjetoInteractivo(imagen=objWater, nombre="agua", valor=50, pos_ui=(100, 500)),
+                ObjetoInteractivo(imagen=objBotiquin, nombre="medKit", valor=200, pos_ui=(400, 500)),
+                ObjetoInteractivo(imagen=objCanasta, nombre="canasta", valor=500, pos_ui=(700, 500))
+            ]
+        )
+
+        self.interactables.append(mesa)
+        if self.escena == "arriba": self.obstaculos = [muro_izq, muro_der, pared_sup, pared_izq, pared_der, npc.block_rect, camas_der_abajo, camas_der_arriba, muroA_abajo_der, muroA_abajo_izq, camilla_arriba, muro_puerta, mesa_interact]
         else: self.obstaculos = [muro_izq, muro_der, pared_sup, pared_izq, pared_der, camas_izq_abajo, muroB_abajo_der, muroB_abajo_izq, muro_pared, camas_izq_arriba, camas_der, camilla_abajo]
 
         # Trigger de cambio
@@ -166,13 +212,30 @@ class Player:
     def get_use_zone(self, player_rect, facing, area=40):
         if facing == "up":
             return pygame.Rect(player_rect.centerx - 12, player_rect.top - area, 24, area)
-        elif facing == "down":
+        if facing == "down":
             return pygame.Rect(player_rect.centerx - 12, player_rect.bottom, 24, area)
-        elif facing == "left":
+        if facing == "left":
             return pygame.Rect(player_rect.left - area, player_rect.centery, area, player_rect.height)
-        elif facing == "right":
+        if facing == "right":
             return pygame.Rect(player_rect.right, player_rect.centery - 12, area, 24)
         return player_rect.copy()
+    
+    def dibujar_mesa(self):
+        # Fondo oscuro
+        overlay = pygame.Surface(self.screen.get_size(), pygame.SRCALPHA)
+        overlay.fill((0, 0, 0, 200))
+        self.screen.blit(overlay, (0, 0))
+
+        # Título
+        titulo = self.font.render("Selecciona un objeto", True, (255, 255, 255))
+        self.screen.blit(titulo, (self.screen.get_width() // 2 - titulo.get_width() // 2, 50))
+
+        # Dibujar objetos de la mesa
+        mesa = self.mesa_abierta
+        for obj in mesa.objetos:
+            self.screen.blit(obj.imagen, obj.rect.topleft)
+            nombre = self.font.render(f"{obj.nombre} - valor: {obj.valor}", True, (255, 255, 255))
+            self.screen.blit(nombre, (obj.rect.left, obj.rect.bottom + 5))
         
 
     def movimiento(self):
@@ -228,18 +291,19 @@ class Player:
         candidato = None
 
         for npc in self.npcs:
-            if npc.enabled and npc.block_rect.colliderect(use_zone):
+            if npc.enabled and use_zone.colliderect(npc.rect):
                 candidato = npc
-                break;
-        
+                print("Candidato encontrado:", candidato.name)
+                break
+
         if candidato:
-            prompt = self.font.render(f"[E] {candidato.request_msg}", True, (255, 255, 255))
+            prompt = self.font.render(f"Presiona E para interaccionar con {candidato.name}", True, (255, 255, 255))
             self.screen.blit(prompt, (candidato.rect.centerx - self.scroll_x - 6,
                                       candidato.rect.top - 18 - self.scroll_y))
 
         #blits o draws
         self.screen.blit(self.image, (-self.scroll_x, -self.scroll_y))
-        for npc in self.npcs: npc.draw(self.screen, self.scroll_x, self.scroll_y)
+
 
         if self.debug:
             def draw_rect(r, color=(255, 0, 0, 120)):
@@ -259,6 +323,36 @@ class Player:
             self.dire = "down"
             self.frame = 0
 
+        for npc in self.npcs: npc.draw(self.screen, self.scroll_x, self.scroll_y)
 
         self.screen.blit(self.direcciones[self.dire][self.frame],
                          (self.player_x - self.scroll_x, self.player_y - self.scroll_y))
+        
+        
+    def manejar_eventos(self, event):
+        if self.estado == "mesa":
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                pos = pygame.mouse.get_pos()
+                for obj in self.mesa_abierta.objetos:
+                    if obj.rect.collidepoint(pos):
+                        self.add_item(obj.nombre, obj.valor)
+                        self.mesa_abierta.objetos.remove(obj)
+                        print(f"Objeto {obj.nombre} agregado al inventario.")
+                        self.estado = "jugando"
+                        self.mesa_abierta = None
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                self.estado = "jugando"
+                self.mesa_abierta = None
+        elif self.estado == "jugando":
+            player_rect = self.get_player_rect()
+            use_zone = self.get_use_zone(player_rect, self.dire, 40)
+
+            candidatoMesa = None
+            for mesa in self.interactables:
+                if mesa.enabled and use_zone.colliderect(mesa.rect):
+                    candidatoMesa = mesa
+                    break
+            if candidatoMesa and event.type == pygame.KEYDOWN and event.key == pygame.K_e:
+                candidatoMesa.try_interactTable(self)
+                        
+

@@ -17,7 +17,11 @@ def game():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 exit()
+            mainPlayer.manejar_eventos(event)
         mainPlayer.movimiento()
+        if mainPlayer.estado == "mesa":
+            mainPlayer.dibujar_mesa()
+
         pygame.display.update()
         clock.tick(60)
         
