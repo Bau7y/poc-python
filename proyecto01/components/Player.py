@@ -10,6 +10,13 @@ class Player:
         self.player_w = 75
         self.player_h = 125
         self.debug = False
+        self.obj_tomado = False
+
+        #tiempoLimite
+        self.tiempoLimite = 300
+        self.tiempoRestante = self.tiempoLimite
+        self.tiempoUltimoTick = pygame.time.get_ticks()
+        self.partidaTerminada = False
 
         # Estado animación / dirección
         self.dire = "down"
@@ -56,7 +63,6 @@ class Player:
 
     def add_item(self, item, valor):
         self.inventario[item] += valor
-        self.stats["puntos"] += valor
 
     def has_item(self, item, qty=1):
         return self.inventario.get(item, 0) >= qty
@@ -227,8 +233,12 @@ class Player:
         self.screen.blit(overlay, (0, 0))
 
         # Título
-        titulo = self.font.render("Selecciona un objeto", True, (255, 255, 255))
-        self.screen.blit(titulo, (self.screen.get_width() // 2 - titulo.get_width() // 2, 50))
+        if not self.obj_tomado:
+            titulo = self.font.render("Selecciona un objeto", True, (255, 255, 255))
+            self.screen.blit(titulo, (self.screen.get_width() // 2 - titulo.get_width() // 2, 50))
+        else:
+            titulo = self.font.render("Ya seleccionaste un objeto", True, (255, 255, 255))
+            self.screen.blit(titulo, (self.screen.get_width() // 2 - titulo.get_width() // 2, 50))
 
         # Dibujar objetos de la mesa
         mesa = self.mesa_abierta
@@ -239,6 +249,21 @@ class Player:
         
 
     def movimiento(self):
+        if not self.partidaTerminada:
+            ahora = pygame.time.get_ticks()
+            delta = (ahora - self.tiempoUltimoTick) / 1000
+            self.tiempoUltimoTick = ahora
+
+            self.tiempoRestante -= delta
+            minutos = int(self.tiempoRestante // 60)
+            segundos = int(self.tiempoRestante % 60)
+            self.tiempoRestante_str = f"{minutos:02d}:{segundos:02d}"
+            if self.tiempoRestante <= 0:
+                self.partidaTerminada = True
+                self.tiempoRestante = 0
+                print("¡Tiempo agotado! Fin del juego.")
+                self.estado = "gameover"
+
         dx = dy = 0
         teclas = pygame.key.get_pressed()
         moving = False
@@ -287,19 +312,6 @@ class Player:
         self.scroll_y = max(0, min(self.height - self.screen.get_height(), self.scroll_y))
 
         #npc colision
-        use_zone = self.get_use_zone(player_rect, self.dire, 40)
-        candidato = None
-
-        for npc in self.npcs:
-            if npc.enabled and use_zone.colliderect(npc.rect):
-                candidato = npc
-                print("Candidato encontrado:", candidato.name)
-                break
-
-        if candidato:
-            prompt = self.font.render(f"Presiona E para interaccionar con {candidato.name}", True, (255, 255, 255))
-            self.screen.blit(prompt, (candidato.rect.centerx - self.scroll_x - 6,
-                                      candidato.rect.top - 18 - self.scroll_y))
 
         #blits o draws
         self.screen.blit(self.image, (-self.scroll_x, -self.scroll_y))
@@ -328,6 +340,12 @@ class Player:
         self.screen.blit(self.direcciones[self.dire][self.frame],
                          (self.player_x - self.scroll_x, self.player_y - self.scroll_y))
         
+        tiempo_txt = self.font.render(f"Tiempo restante: {self.tiempoRestante_str}", True, (255, 255, 255))
+        self.screen.blit(tiempo_txt, (20, 20))
+
+        puntos_txt = self.font.render(f"Puntos: {self.stats["puntos"]}", True, (255, 255, 255))
+        self.screen.blit(puntos_txt, (20, 60))
+        
         
     def manejar_eventos(self, event):
         if self.estado == "mesa":
@@ -335,17 +353,35 @@ class Player:
                 pos = pygame.mouse.get_pos()
                 for obj in self.mesa_abierta.objetos:
                     if obj.rect.collidepoint(pos):
-                        self.add_item(obj.nombre, obj.valor)
-                        self.mesa_abierta.objetos.remove(obj)
-                        print(f"Objeto {obj.nombre} agregado al inventario.")
-                        self.estado = "jugando"
-                        self.mesa_abierta = None
+                        if not self.obj_tomado:
+                            self.obj_tomado = True
+                            self.add_item(obj.nombre, obj.valor)
+                            self.mesa_abierta.objetos.remove(obj)
+                            print(f"Objeto {obj.nombre} agregado al inventario.")
+                            self.estado = "jugando"
+                            self.mesa_abierta = None
             elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                 self.estado = "jugando"
                 self.mesa_abierta = None
         elif self.estado == "jugando":
             player_rect = self.get_player_rect()
             use_zone = self.get_use_zone(player_rect, self.dire, 40)
+
+            candidato = None
+            for npc in self.npcs:
+                if npc.enabled and use_zone.colliderect(npc.rect):
+                    candidato = npc
+                    print("Candidato encontrado:", candidato.name)
+                    break
+
+            if candidato:
+                prompt = self.font.render(f"Presiona E para interaccionar con {candidato.name}", True, (255, 255, 255))
+                self.screen.blit(prompt, (candidato.rect.centerx - self.scroll_x - 6,
+                                        candidato.rect.top - 18 - self.scroll_y))
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_e and candidato:
+                texto = candidato.try_interact(self)
+                if texto:
+                    print("Texto:", texto)
 
             candidatoMesa = None
             for mesa in self.interactables:
