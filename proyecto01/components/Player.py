@@ -2,6 +2,7 @@ import pygame
 from collections import Counter
 from components.Interact import Interact
 from components.Mesa import *
+import random
 
 class Player:
     def __init__(self, screen):
@@ -76,11 +77,11 @@ class Player:
         objCanasta = pygame.transform.scale(objCanasta, (300, 300))
         bgCanasta = objCanasta.get_at((0, 0))
         objCanasta.set_colorkey(bgCanasta)
-        #npcs
+        #npcsImgs
         npcImg1 = pygame.image.load(r"proyecto01\images\personajeNpc1.png").convert_alpha()
         npcImg2 = pygame.image.load(r"proyecto01\images\personajeNpc2.png").convert_alpha()
         npcImg3 = pygame.image.load(r"proyecto01\images\personajeNpc3.png").convert_alpha()
-
+        #Mesa
         self.mesa = MesaInteractuable(
             rect=pygame.Rect(100, 655, 200, 90),
             objetos=[
@@ -92,7 +93,7 @@ class Player:
                 ObjetoInteractivo(imagen=objCanasta, nombre="canasta", valor=500, pos_ui=(700, 500))
             ]
         )
-
+        #Npcs
         self.npcA = Interact(
                 rect=pygame.Rect(300, 500, 20, 20),
                 name="Paciente A",
@@ -110,13 +111,42 @@ class Player:
                 request_msg="Necesito una bombona de oxigeno"
             )
         self.npcC = Interact(
-                rect=pygame.Rect(800, 650, 30, 40),
+                rect=pygame.Rect(900, 620, 30, 40),
                 name="Paciente C",
                 required_item="canasta",
                 img= npcImg3,
                 thanks_msg="Gracias por la canasta",
                 request_msg="Necesito una canasta de viveres"
             )
+        #npcsEvento
+        self.npcTempB = Interact(
+                rect=pygame.Rect(600, 1000, 30, 40),
+                name="Paciente D",
+                required_item="pildora",
+                img= npcImg2,
+                thanks_msg="Gracias por la pildora",
+                request_msg="Necesito una pildora"
+            )
+        self.npcTempA = Interact(
+                rect=pygame.Rect(600, 700, 30, 40),
+                name="Paciente E",
+                required_item="medKit",
+                img= npcImg1,
+                thanks_msg="Gracias por el botiquin",
+                request_msg="Necesito un botiquin"
+            )
+        self.npcTempC = Interact(
+                rect=pygame.Rect(900, 620, 30, 40),
+                name="Paciente F",
+                required_item="agua",
+                img= npcImg3,
+                thanks_msg="Gracias por el agua",
+                request_msg="Necesito agua"
+            )
+        #tiempoEvento
+        self.randomMin = random.randint(1, 3)
+        self.randomSec = random.randint(10, 40)
+        #npcsIniciales
         self.npcs_escena = {"arriba": [self.npcA],
                             "abajo": [self.npcB, self.npcC]}
 
@@ -285,7 +315,7 @@ class Player:
         game_over_text = self.font.render(f"¡Tiempo agotado! Fin del juego. \n Total Puntos {self.stats["puntos"]}", True, (255, 0, 0))
         self.screen.blit(game_over_text, (self.width // 2 - game_over_text.get_width() // 2, self.height // 2 - game_over_text.get_height() // 2))
         pygame.display.flip()
-        pygame.time.wait(3000)
+        pygame.time.wait(5000)
         
 
     def movimiento(self):
@@ -293,7 +323,6 @@ class Player:
             ahora = pygame.time.get_ticks()
             delta = (ahora - self.tiempoUltimoTick) / 1000
             self.tiempoUltimoTick = ahora
-
             self.tiempoRestante -= delta
             minutos = int(self.tiempoRestante // 60)
             segundos = int(self.tiempoRestante % 60)
@@ -303,6 +332,13 @@ class Player:
                 self.tiempoRestante = 0
                 print("¡Tiempo agotado! Fin del juego.")
                 self.estado = "gameover"
+            #eventosPorTiempo
+            elif self.tiempoRestante_str == "03:59":
+                self.npcs_escena["abajo"].append(self.npcTempB)
+                print(self.randomMin, self.randomSec)
+            elif self.tiempoRestante_str == f"0{self.randomMin}:{self.randomSec}":
+                self.npcs_escena["abajo"].append(self.npcTempA)
+                self.npcs_escena["arriba"].append(self.npcTempC)
 
         dx = dy = 0
         teclas = pygame.key.get_pressed()
