@@ -19,6 +19,8 @@ def game():
                 exit()
             mainPlayer.manejar_eventos(event)
         mainPlayer.movimiento()
+        if mainPlayer.dialogo_timer > 0:
+            mainPlayer.dibujar_dialogo()
         if mainPlayer.estado == "mesa":
             mainPlayer.dibujar_mesa()
         elif mainPlayer.estado == "gameover":

@@ -14,7 +14,7 @@ class Player:
         self.obj_tomado = False
 
         #tiempoLimite
-        self.tiempoLimite = 300
+        self.tiempoLimite = 240
         self.tiempoRestante = self.tiempoLimite
         self.tiempoUltimoTick = pygame.time.get_ticks()
         self.partidaTerminada = False
@@ -158,6 +158,11 @@ class Player:
         self.inventario = Counter({})
 
         self.font = pygame.font.SysFont("Arial", 24)
+
+        #dialogos
+        self.dialogo_actual = ""
+        self.dialogo_timer = 0
+        self.dialogo_npc = None
 
 
     def add_item(self, item, valor):
@@ -309,6 +314,24 @@ class Player:
             nombre = self.font.render(f"{obj.nombre} - valor: {obj.valor}", True, (255, 255, 255))
             self.screen.blit(nombre, (obj.rect.left, obj.rect.bottom + 5))
 
+
+    def dibujar_dialogo(self):
+        if not self.dialogo_actual:
+            return
+        #fondo recuadro
+        ancho = self.screen.get_width()
+        alto = 60
+        caja = pygame.Surface((ancho - 40, alto))
+        caja.set_alpha(128)
+        caja.fill((20, 20, 20))
+        self.screen.blit(caja, (20, self.screen.get_height() - alto - 20))
+
+        #texto
+        lineas = self.dialogo_actual.split("\n")
+        for i, line in enumerate(lineas):
+            texto = self.font.render(line, True, (255, 255, 255))
+            self.screen.blit(texto, (30, self.screen.get_height() - alto - 5 + i * 25))
+
     def game_over(self):
         self.estado = "gameover"
         self.screen.fill((0, 0, 0))
@@ -333,12 +356,18 @@ class Player:
                 print("¡Tiempo agotado! Fin del juego.")
                 self.estado = "gameover"
             #eventosPorTiempo
-            elif self.tiempoRestante_str == "03:59":
+            elif self.tiempoRestante_str == "03:10":
                 self.npcs_escena["abajo"].append(self.npcTempB)
-                print(self.randomMin, self.randomSec)
             elif self.tiempoRestante_str == f"0{self.randomMin}:{self.randomSec}":
                 self.npcs_escena["abajo"].append(self.npcTempA)
                 self.npcs_escena["arriba"].append(self.npcTempC)
+
+        #actualizacion del timer
+        if self.dialogo_timer > 0:
+            self.dialogo_timer -= 1 / 60 if hasattr(self, "dt") else 1 / 60
+            if self.dialogo_timer <= 0:
+                self.dialogo_actual = ""
+                self.dialogo_npc = None
 
         dx = dy = 0
         teclas = pygame.key.get_pressed()
@@ -457,7 +486,8 @@ class Player:
             if event.type == pygame.KEYDOWN and event.key == pygame.K_e and candidato:
                 texto = candidato.try_interact(self)
                 if texto:
-                    print("Texto:", texto)
+                    self.dialogo_actual = texto
+                    self.dialogo_timer = 4
 
             candidatoMesa = None
             for mesa in self.interactables:
