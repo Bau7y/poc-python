@@ -21,6 +21,10 @@ def game():
         mainPlayer.movimiento()
         if mainPlayer.estado == "mesa":
             mainPlayer.dibujar_mesa()
+        elif mainPlayer.estado == "gameover":
+            mainPlayer.game_over()
+            pygame.quit()
+            exit()
 
         pygame.display.update()
         clock.tick(60)
