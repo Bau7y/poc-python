@@ -51,6 +51,75 @@ class Player:
         # Cooldown para el gate
         self.portal_cd = 0
 
+        #objetos
+        objCO2 = pygame.image.load(r"proyecto01\images\bombonaOxigeno.png").convert_alpha()
+        objCO2 = pygame.transform.scale(objCO2, (300, 300))
+        bgCO2 = objCO2.get_at((0, 0))
+        objCO2.set_colorkey(bgCO2)
+        objVenda = pygame.image.load(r"proyecto01\images\venda.png").convert_alpha()
+        objVenda = pygame.transform.scale(objVenda, (300, 300))
+        bgVenda = objVenda.get_at((0, 0))
+        objVenda.set_colorkey(bgVenda)
+        objPill = pygame.image.load(r"proyecto01\images\pill.png").convert_alpha()
+        objPill = pygame.transform.scale(objPill, (300, 300))
+        bgPill = objPill.get_at((0, 0))
+        objPill.set_colorkey(bgPill)
+        objWater = pygame.image.load(r"proyecto01\images\botellaAgua.png").convert_alpha()
+        objWater = pygame.transform.scale(objWater, (300, 300))
+        bgWater = objWater.get_at((0, 0))
+        objWater.set_colorkey(bgWater)
+        objBotiquin = pygame.image.load(r"proyecto01\images\botiquin.png").convert_alpha()
+        objBotiquin = pygame.transform.scale(objBotiquin, (300, 300))
+        bgBotiquin = objBotiquin.get_at((0, 0))
+        objBotiquin.set_colorkey(bgBotiquin)
+        objCanasta = pygame.image.load(r"proyecto01\images\canasta.png").convert_alpha()
+        objCanasta = pygame.transform.scale(objCanasta, (300, 300))
+        bgCanasta = objCanasta.get_at((0, 0))
+        objCanasta.set_colorkey(bgCanasta)
+        #npcs
+        npcImg1 = pygame.image.load(r"proyecto01\images\personajeNpc1.png").convert_alpha()
+        npcImg2 = pygame.image.load(r"proyecto01\images\personajeNpc2.png").convert_alpha()
+        npcImg3 = pygame.image.load(r"proyecto01\images\personajeNpc3.png").convert_alpha()
+
+        self.mesa = MesaInteractuable(
+            rect=pygame.Rect(100, 655, 200, 90),
+            objetos=[
+                ObjetoInteractivo(imagen=objCO2, nombre="CO2", valor=150, pos_ui=(100, 100)),
+                ObjetoInteractivo(imagen=objVenda, nombre="venda", valor=60, pos_ui=(400, 100)),
+                ObjetoInteractivo(imagen=objPill, nombre="pildora", valor=70, pos_ui=(700, 100)),
+                ObjetoInteractivo(imagen=objWater, nombre="agua", valor=50, pos_ui=(100, 500)),
+                ObjetoInteractivo(imagen=objBotiquin, nombre="medKit", valor=200, pos_ui=(400, 500)),
+                ObjetoInteractivo(imagen=objCanasta, nombre="canasta", valor=500, pos_ui=(700, 500))
+            ]
+        )
+
+        self.npcA = Interact(
+                rect=pygame.Rect(300, 500, 20, 20),
+                name="Paciente A",
+                required_item="venda",
+                img= npcImg1,
+                thanks_msg="Gracias por la venda",
+                request_msg="Necesito una venda"
+            )
+        self.npcB = Interact(
+                rect=pygame.Rect(400, 900, 30, 40),
+                name="Paciente B",
+                required_item="CO2",
+                img= npcImg2,
+                thanks_msg="Gracias por la bombona de oxigeno",
+                request_msg="Necesito una bombona de oxigeno"
+            )
+        self.npcC = Interact(
+                rect=pygame.Rect(800, 650, 30, 40),
+                name="Paciente C",
+                required_item="canasta",
+                img= npcImg3,
+                thanks_msg="Gracias por la canasta",
+                request_msg="Necesito una canasta de viveres"
+            )
+        self.npcs_escena = {"arriba": [self.npcA],
+                            "abajo": [self.npcB, self.npcC]}
+
         # Cargar escena 1era
         self.cargar_escena("arriba")
         self.player_x, self.player_y = self.width // 2, self.height // 2
@@ -81,21 +150,13 @@ class Player:
 
     def cargar_escena(self, nombre):
         self.interactables = []
-        self.npcs = []
+        self.npcs = self.npcs_escena.get(nombre, [])
         self.estado = "jugando"
         self.escena = nombre
-        npcImg1 = pygame.image.load(r"proyecto01\images\personajeNpc1.png").convert_alpha()
+        
         if nombre == "arriba":
             self.image = pygame.image.load(r"proyecto01\images\escenarioArriba.png").convert()
-            npc = Interact(
-                rect=pygame.Rect(300, 500, 20, 20),
-                name="Paciente A",
-                required_item="venda",
-                img= npcImg1,
-                thanks_msg="Gracias por la venda",
-                request_msg="Necesito una venda"
-            )
-            self.npcs.append(npc)
+            self.interactables.append(self.mesa)
             print("Npcs cargados: ", [npc.name for npc in self.npcs])
         elif nombre == "abajo":
             self.image = pygame.image.load(r"proyecto01\images\escenarioAbajo.png").convert()
@@ -127,7 +188,6 @@ class Player:
         muro_puerta = pygame.Rect(0, 320, 600, 10)
         muroA_abajo_der = pygame.Rect(700, 1040, 499, 190)
         muroA_abajo_izq = pygame.Rect(0, 1040, 499, 189)
-        mesa_interact = pygame.Rect(100, 655, 200, 90)
 
         #hitboxes abajo
         muroB_abajo_der = pygame.Rect(700, 1590, 499, 190)
@@ -138,47 +198,19 @@ class Player:
         muro_pared = pygame.Rect(0, 450, self.width, pared)
         camilla_abajo = pygame.Rect(self.width // 2 - 100, 470, 200, 180)
 
-         #objetos
-        objCO2 = pygame.image.load(r"proyecto01\images\bombonaOxigeno.png").convert_alpha()
-        objCO2 = pygame.transform.scale(objCO2, (300, 300))
-        bgCO2 = objCO2.get_at((0, 0))
-        objCO2.set_colorkey(bgCO2)
-        objVenda = pygame.image.load(r"proyecto01\images\venda.png").convert_alpha()
-        objVenda = pygame.transform.scale(objVenda, (300, 300))
-        bgVenda = objVenda.get_at((0, 0))
-        objVenda.set_colorkey(bgVenda)
-        objPill = pygame.image.load(r"proyecto01\images\pill.png").convert_alpha()
-        objPill = pygame.transform.scale(objPill, (300, 300))
-        bgPill = objPill.get_at((0, 0))
-        objPill.set_colorkey(bgPill)
-        objWater = pygame.image.load(r"proyecto01\images\botellaAgua.png").convert_alpha()
-        objWater = pygame.transform.scale(objWater, (300, 300))
-        bgWater = objWater.get_at((0, 0))
-        objWater.set_colorkey(bgWater)
-        objBotiquin = pygame.image.load(r"proyecto01\images\botiquin.png").convert_alpha()
-        objBotiquin = pygame.transform.scale(objBotiquin, (300, 300))
-        bgBotiquin = objBotiquin.get_at((0, 0))
-        objBotiquin.set_colorkey(bgBotiquin)
-        objCanasta = pygame.image.load(r"proyecto01\images\canasta.png").convert_alpha()
-        objCanasta = pygame.transform.scale(objCanasta, (300, 300))
-        bgCanasta = objCanasta.get_at((0, 0))
-        objCanasta.set_colorkey(bgCanasta)
-
-        mesa = MesaInteractuable(
-            rect=pygame.Rect(100, 655, 200, 90),
-            objetos=[
-                ObjetoInteractivo(imagen=objCO2, nombre="CO2", valor=150, pos_ui=(100, 100)),
-                ObjetoInteractivo(imagen=objVenda, nombre="venda", valor=60, pos_ui=(400, 100)),
-                ObjetoInteractivo(imagen=objPill, nombre="pildora", valor=70, pos_ui=(700, 100)),
-                ObjetoInteractivo(imagen=objWater, nombre="agua", valor=50, pos_ui=(100, 500)),
-                ObjetoInteractivo(imagen=objBotiquin, nombre="medKit", valor=200, pos_ui=(400, 500)),
-                ObjetoInteractivo(imagen=objCanasta, nombre="canasta", valor=500, pos_ui=(700, 500))
-            ]
-        )
-
-        self.interactables.append(mesa)
-        if self.escena == "arriba": self.obstaculos = [muro_izq, muro_der, pared_sup, pared_izq, pared_der, npc.block_rect, camas_der_abajo, camas_der_arriba, muroA_abajo_der, muroA_abajo_izq, camilla_arriba, muro_puerta, mesa_interact]
-        else: self.obstaculos = [muro_izq, muro_der, pared_sup, pared_izq, pared_der, camas_izq_abajo, muroB_abajo_der, muroB_abajo_izq, muro_pared, camas_izq_arriba, camas_der, camilla_abajo]
+        
+        if self.escena == "arriba":
+            self.obstaculos = [muro_izq, muro_der, pared_sup, pared_izq, pared_der, camas_der_abajo,
+                                camas_der_arriba, muroA_abajo_der, muroA_abajo_izq, camilla_arriba, muro_puerta, self.mesa.rect]
+            for npc in self.npcs:
+                if npc.enabled:
+                    self.obstaculos.append(npc.block_rect)
+        else: 
+            self.obstaculos = [muro_izq, muro_der, pared_sup, pared_izq, pared_der, camas_izq_abajo, muroB_abajo_der,
+                                muroB_abajo_izq, muro_pared, camas_izq_arriba, camas_der, camilla_abajo]
+            for npc in self.npcs:
+                if npc.enabled:
+                    self.obstaculos.append(npc.block_rect)
 
         # Trigger de cambio
         self.trigger_bajar = pygame.Rect(
@@ -246,6 +278,14 @@ class Player:
             self.screen.blit(obj.imagen, obj.rect.topleft)
             nombre = self.font.render(f"{obj.nombre} - valor: {obj.valor}", True, (255, 255, 255))
             self.screen.blit(nombre, (obj.rect.left, obj.rect.bottom + 5))
+
+    def game_over(self):
+        self.estado = "gameover"
+        self.screen.fill((0, 0, 0))
+        game_over_text = self.font.render(f"¡Tiempo agotado! Fin del juego. \n Total Puntos {self.stats["puntos"]}", True, (255, 0, 0))
+        self.screen.blit(game_over_text, (self.width // 2 - game_over_text.get_width() // 2, self.height // 2 - game_over_text.get_height() // 2))
+        pygame.display.flip()
+        pygame.time.wait(3000)
         
 
     def movimiento(self):
