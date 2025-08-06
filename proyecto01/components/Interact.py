@@ -40,8 +40,12 @@ class Interact:
             self.visible = False
             if hasattr(player, "obstaculos") and self.block_rect in player.obstaculos:
                 player.obstaculos.remove(self.block_rect)
-                player.stats["puntos"] += player.inventario[self.required_item] + 1
                 player.obj_tomado = False
                 player.npcs.remove(self)
+                if player.primer_obj:
+                    player.primer_obj = False
+                    player.stats["puntos"] += player.inventario[self.required_item] * 2 + 2
+                else:
+                    player.stats["puntos"] += player.inventario[self.required_item] + 1
             return f"{self.name}: {self.thanks_msg}"
         return f"Aún necesito {self.required_item}"

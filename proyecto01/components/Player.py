@@ -12,6 +12,7 @@ class Player:
         self.player_h = 125
         self.debug = False
         self.obj_tomado = False
+        self.primer_obj = True
 
         #tiempoLimite
         self.tiempoLimite = 240
@@ -110,7 +111,7 @@ class Player:
                 thanks_msg="Gracias por la bombona de oxigeno",
                 request_msg="Necesito una bombona de oxigeno"
             )
-        self.npcC = Interact(
+        self.npcTempC = Interact(
                 rect=pygame.Rect(900, 620, 30, 40),
                 name="Paciente C",
                 required_item="canasta",
@@ -135,7 +136,7 @@ class Player:
                 thanks_msg="Gracias por el botiquin",
                 request_msg="Necesito un botiquin"
             )
-        self.npcTempC = Interact(
+        self.npcC = Interact(
                 rect=pygame.Rect(900, 620, 30, 40),
                 name="Paciente F",
                 required_item="agua",
@@ -301,7 +302,10 @@ class Player:
 
         # Título
         if not self.obj_tomado:
-            titulo = self.font.render("Selecciona un objeto", True, (255, 255, 255))
+            if self.primer_obj:
+                titulo = self.font.render("Selecciona un objeto\nEl primero vale X2", True, (255, 255, 255))
+            else:
+                titulo = self.font.render("Selecciona un objeto", True, (255, 255, 255))
             self.screen.blit(titulo, (self.screen.get_width() // 2 - titulo.get_width() // 2, 50))
         else:
             titulo = self.font.render("Ya seleccionaste un objeto", True, (255, 255, 255))
