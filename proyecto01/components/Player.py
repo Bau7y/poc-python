@@ -336,13 +336,27 @@ class Player:
             texto = self.font.render(line, True, (255, 255, 255))
             self.screen.blit(texto, (30, self.screen.get_height() - alto - 5 + i * 25))
 
+    def dibujar_mensaje(self):
+        if self.mensaje_interaccion:
+            texto, x, y = self.mensaje_interaccion
+            txt_render = self.font.render(texto, True, (255, 255, 255))
+
+            x -= self.scroll_x
+            y -= self.scroll_y
+
+            fondo = pygame.Surface((txt_render.get_width() + 10, txt_render.get_height() + 10))
+            fondo.set_alpha(180)
+            fondo.fill((0, 0, 0))
+            self.screen.blit(fondo, (x - 5 - txt_render.get_width() // 2, y - 5))
+            self.screen.blit(txt_render, (x - txt_render.get_width() // 2, y))
+
     def game_over(self):
         self.estado = "gameover"
         self.screen.fill((0, 0, 0))
         game_over_text = self.font.render(f"¡Tiempo agotado! Fin del juego. \n Total Puntos {self.stats["puntos"]}", True, (255, 0, 0))
         self.screen.blit(game_over_text, (self.width // 2 - game_over_text.get_width() // 2, self.height // 2 - game_over_text.get_height() // 2))
         pygame.display.flip()
-        pygame.time.wait(5000)
+        pygame.time.wait(10000)
         
 
     def movimiento(self):
@@ -420,7 +434,9 @@ class Player:
         self.scroll_x = max(0, min(self.width  - self.screen.get_width(),  self.scroll_x))
         self.scroll_y = max(0, min(self.height - self.screen.get_height(), self.scroll_y))
 
-        #npc colision
+        #npc o mesa colision con jugador
+        self.mensaje_interaccion = None
+        self.zona_uso = self.get_use_zone(self.get_player_rect(), self.dire, 36)
 
         #blits o draws
         self.screen.blit(self.image, (-self.scroll_x, -self.scroll_y))
@@ -444,7 +460,18 @@ class Player:
             self.dire = "down"
             self.frame = 0
 
-        for npc in self.npcs: npc.draw(self.screen, self.scroll_x, self.scroll_y)
+        #npc o mesa colision con jugador
+        for npc in self.npcs: 
+            npc.draw(self.screen, self.scroll_x, self.scroll_y)
+            if npc.enabled and self.zona_uso.colliderect(npc.rect):
+                self.mensaje_interaccion = ("Presiona E para interactuar", npc.rect.centerx, npc.rect.top - 10)
+                break
+        if not self.mensaje_interaccion:
+            for mesa in self.interactables:
+                if mesa.enabled and self.zona_uso.colliderect(mesa.rect):
+                    self.mensaje_interaccion = ("Presiona E para interactuar", mesa.rect.centerx, mesa.rect.top - 10)
+                    break
+
 
         self.screen.blit(self.direcciones[self.dire][self.frame],
                          (self.player_x - self.scroll_x, self.player_y - self.scroll_y))
