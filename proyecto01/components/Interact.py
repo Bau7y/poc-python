@@ -34,18 +34,21 @@ class Interact:
             
             #pedido, agregar 
         if player.has_item(self.required_item):
+            cantidad = player.inventario.get(self.required_item, 0)
             player.remove_item(self.required_item, 1)
             self.completed = True
             self.enabled = False
             self.visible = False
             if hasattr(player, "obstaculos") and self.block_rect in player.obstaculos:
                 player.obstaculos.remove(self.block_rect)
+                if self in player.npcs:
+                    player.npcs.remove(self)
+            if player.primer_obj:
+                player.primer_obj = False
                 player.obj_tomado = False
-                player.npcs.remove(self)
-                if player.primer_obj:
-                    player.primer_obj = False
-                    player.stats["puntos"] += player.inventario[self.required_item] * 2 + 2
-                else:
-                    player.stats["puntos"] += player.inventario[self.required_item] + 1
+                player.stats["puntos"] += cantidad * 2 
+            else:
+                player.obj_tomado = False
+                player.stats["puntos"] += cantidad 
             return f"{self.name}: {self.thanks_msg}"
         return f"Aún necesito {self.required_item}"

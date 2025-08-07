@@ -26,8 +26,9 @@ def game():
             mainPlayer.dibujar_mesa()
         elif mainPlayer.estado == "gameover":
             mainPlayer.game_over()
-            pygame.quit()
-            exit()
+        elif mainPlayer.estado == "win":
+            mainPlayer.game_over()
+            
 
         pygame.display.update()
         clock.tick(60)
@@ -86,7 +87,7 @@ def history():
                         fading_out = False
                         fading_in = True
                         indexActual += 1
-                        if indexActual >= len(historia)-3:
+                        if indexActual >= len(historia):
                             game()
             if event.type == pygame.USEREVENT:
                 fading_out = True
@@ -147,5 +148,4 @@ def main_menu():
 
 if __name__ == "__main__":
     main_menu()
-
     

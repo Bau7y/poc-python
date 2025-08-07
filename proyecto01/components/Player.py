@@ -3,6 +3,7 @@ from collections import Counter
 from components.Interact import Interact
 from components.Mesa import *
 import random
+from sys import exit
 
 class Player:
     def __init__(self, screen):
@@ -19,6 +20,7 @@ class Player:
         self.tiempoRestante = self.tiempoLimite
         self.tiempoUltimoTick = pygame.time.get_ticks()
         self.partidaTerminada = False
+        self.tiempoFinal = 0
 
         # Estado animación / dirección
         self.dire = "down"
@@ -96,7 +98,7 @@ class Player:
         )
         #Npcs
         self.npcA = Interact(
-                rect=pygame.Rect(300, 500, 20, 20),
+                rect=pygame.Rect(300, 500, 30, 50),
                 name="Paciente A",
                 required_item="venda",
                 img= npcImg1,
@@ -104,7 +106,7 @@ class Player:
                 request_msg="Necesito una venda"
             )
         self.npcB = Interact(
-                rect=pygame.Rect(400, 900, 30, 40),
+                rect=pygame.Rect(400, 900, 30, 50),
                 name="Paciente B",
                 required_item="CO2",
                 img= npcImg2,
@@ -112,7 +114,7 @@ class Player:
                 request_msg="Necesito una bombona de oxigeno"
             )
         self.npcTempC = Interact(
-                rect=pygame.Rect(900, 620, 30, 40),
+                rect=pygame.Rect(900, 620, 30, 50),
                 name="Paciente C",
                 required_item="canasta",
                 img= npcImg3,
@@ -121,7 +123,7 @@ class Player:
             )
         #npcsEvento
         self.npcTempB = Interact(
-                rect=pygame.Rect(600, 1000, 30, 40),
+                rect=pygame.Rect(400, 1300, 30, 50),
                 name="Paciente D",
                 required_item="pildora",
                 img= npcImg2,
@@ -129,7 +131,7 @@ class Player:
                 request_msg="Necesito una pildora"
             )
         self.npcTempA = Interact(
-                rect=pygame.Rect(600, 700, 30, 40),
+                rect=pygame.Rect(150, 600, 30, 50),
                 name="Paciente E",
                 required_item="medKit",
                 img= npcImg1,
@@ -137,7 +139,7 @@ class Player:
                 request_msg="Necesito un botiquin"
             )
         self.npcC = Interact(
-                rect=pygame.Rect(900, 620, 30, 40),
+                rect=pygame.Rect(900, 620, 30, 50),
                 name="Paciente F",
                 required_item="agua",
                 img= npcImg3,
@@ -156,7 +158,7 @@ class Player:
         self.player_x, self.player_y = self.width // 2, self.height // 2
 
         #inventario
-        self.inventario = Counter({})
+        self.inventario = {}
 
         self.font = pygame.font.SysFont("Arial", 24)
 
@@ -164,21 +166,137 @@ class Player:
         self.dialogo_actual = ""
         self.dialogo_timer = 0
         self.dialogo_npc = None
+    
+
+    def reiniciar(self):
+        self.estado = "jugando"
+        self.velocidad = 8
+        self.player_w = 75
+        self.player_h = 125
+        self.debug = False
+        self.obj_tomado = False
+        self.primer_obj = True
+        self.tiempoLimite = 240
+        self.tiempoRestante = self.tiempoLimite
+        self.tiempoUltimoTick = pygame.time.get_ticks()
+        self.partidaTerminada = False
+        self.tiempoFinal = 0
+        self.dire = "down"
+        self.frame = 0
+        self.contador = 0
+        self.frame_rate = 4
+        self.stats = {"puntos": 0}
+        self.player_x, self.player_y = 0, 0
+        self.portal_cd = 0
+        objCO2 = pygame.image.load(r"proyecto01\images\bombonaOxigeno.png").convert_alpha()
+        objCO2 = pygame.transform.scale(objCO2, (300, 300))
+        bgCO2 = objCO2.get_at((0, 0))
+        objCO2.set_colorkey(bgCO2)
+        objVenda = pygame.image.load(r"proyecto01\images\venda.png").convert_alpha()
+        objVenda = pygame.transform.scale(objVenda, (300, 300))
+        bgVenda = objVenda.get_at((0, 0))
+        objVenda.set_colorkey(bgVenda)
+        objPill = pygame.image.load(r"proyecto01\images\pill.png").convert_alpha()
+        objPill = pygame.transform.scale(objPill, (300, 300))
+        bgPill = objPill.get_at((0, 0))
+        objPill.set_colorkey(bgPill)
+        objWater = pygame.image.load(r"proyecto01\images\botellaAgua.png").convert_alpha()
+        objWater = pygame.transform.scale(objWater, (300, 300))
+        bgWater = objWater.get_at((0, 0))
+        objWater.set_colorkey(bgWater)
+        objBotiquin = pygame.image.load(r"proyecto01\images\botiquin.png").convert_alpha()
+        objBotiquin = pygame.transform.scale(objBotiquin, (300, 300))
+        bgBotiquin = objBotiquin.get_at((0, 0))
+        objBotiquin.set_colorkey(bgBotiquin)
+        objCanasta = pygame.image.load(r"proyecto01\images\canasta.png").convert_alpha()
+        objCanasta = pygame.transform.scale(objCanasta, (300, 300))
+        bgCanasta = objCanasta.get_at((0, 0))
+        objCanasta.set_colorkey(bgCanasta)
+        npcImg1 = pygame.image.load(r"proyecto01\images\personajeNpc1.png").convert_alpha()
+        npcImg2 = pygame.image.load(r"proyecto01\images\personajeNpc2.png").convert_alpha()
+        npcImg3 = pygame.image.load(r"proyecto01\images\personajeNpc3.png").convert_alpha()
+        self.mesa = MesaInteractuable(
+            rect=pygame.Rect(100, 655, 200, 90),
+            objetos=[
+                ObjetoInteractivo(imagen=objCO2, nombre="CO2", valor=150, pos_ui=(100, 100)),
+                ObjetoInteractivo(imagen=objVenda, nombre="venda", valor=60, pos_ui=(400, 100)),
+                ObjetoInteractivo(imagen=objPill, nombre="pildora", valor=70, pos_ui=(700, 100)),
+                ObjetoInteractivo(imagen=objWater, nombre="agua", valor=50, pos_ui=(100, 500)),
+                ObjetoInteractivo(imagen=objBotiquin, nombre="medKit", valor=200, pos_ui=(400, 500)),
+                ObjetoInteractivo(imagen=objCanasta, nombre="canasta", valor=500, pos_ui=(700, 500))
+            ]
+        )
+        self.npcA = Interact(
+                rect=pygame.Rect(300, 500, 30, 50),
+                name="Paciente A",
+                required_item="venda",
+                img= npcImg1,
+                thanks_msg="Gracias por la venda",
+                request_msg="Necesito una venda"
+            )
+        self.npcB = Interact(
+                rect=pygame.Rect(400, 900, 30, 50),
+                name="Paciente B",
+                required_item="CO2",
+                img= npcImg2,
+                thanks_msg="Gracias por la bombona de oxigeno",
+                request_msg="Necesito una bombona de oxigeno"
+            )
+        self.npcTempC = Interact(
+                rect=pygame.Rect(900, 620, 30, 50),
+                name="Paciente C",
+                required_item="canasta",
+                img= npcImg3,
+                thanks_msg="Gracias por la canasta",
+                request_msg="Necesito una canasta de viveres"
+            )
+        self.npcTempB = Interact(
+                rect=pygame.Rect(400, 1300, 30, 50),
+                name="Paciente D",
+                required_item="pildora",
+                img= npcImg2,
+                thanks_msg="Gracias por la pildora",
+                request_msg="Necesito una pildora"
+            )
+        self.npcTempA = Interact(
+                rect=pygame.Rect(150, 600, 30, 50),
+                name="Paciente E",
+                required_item="medKit",
+                img= npcImg1,
+                thanks_msg="Gracias por el botiquin",
+                request_msg="Necesito un botiquin"
+            )
+        self.npcC = Interact(
+                rect=pygame.Rect(900, 620, 30, 50),
+                name="Paciente F",
+                required_item="agua",
+                img= npcImg3,
+                thanks_msg="Gracias por el agua",
+                request_msg="Necesito agua"
+            )
+        self.randomMin = random.randint(1, 3)
+        self.randomSec = random.randint(10, 40)
+        self.npcs_escena = {"arriba": [self.npcA],
+                            "abajo": [self.npcB, self.npcC]}
+        self.player_x, self.player_y = self.width // 2, self.height // 2
+        self.inventario = {}
+        self.dialogo_actual = ""
+        self.dialogo_timer = 0
+        self.dialogo_npc = None
+        self.mesa.enabled = True
+        self.cargar_escena("arriba")
 
 
     def add_item(self, item, valor):
-        self.inventario[item] += valor
+        self.inventario[item] = valor
 
     def has_item(self, item, qty=1):
         return self.inventario.get(item, 0) >= qty
     
     def remove_item(self, item, qty=1):
-        if self.has_item(item, qty):
-            self.inventario[item] -= qty
-            if self.inventario[item] <= 0:
-                del self.inventario[item]
-            return True
-        return False
+        if item in self.inventario:
+            del self.inventario[item]
+            print(self.inventario)
 
     def get_player_rect(self):
         return pygame.Rect(int(self.player_x), int(self.player_y), self.player_w, self.player_h)
@@ -351,12 +469,17 @@ class Player:
             self.screen.blit(txt_render, (x - txt_render.get_width() // 2, y))
 
     def game_over(self):
-        self.estado = "gameover"
-        self.screen.fill((0, 0, 0))
-        game_over_text = self.font.render(f"¡Tiempo agotado! Fin del juego. \n Total Puntos {self.stats["puntos"]}", True, (255, 0, 0))
-        self.screen.blit(game_over_text, (self.width // 2 - game_over_text.get_width() // 2, self.height // 2 - game_over_text.get_height() // 2))
+        fondo = pygame.image.load(r"proyecto01\images\menu.jpeg")
+        fondo = pygame.transform.scale(fondo, (1200, 920))
+        self.screen.blit(fondo, (0, 0))
+        if self.estado == "gameover":
+            game_over_text = self.font.render(f"¡Tiempo agotado! Fin del juego. \nTotal Puntos: {self.stats["puntos"]}\nTiempo Total: {self.tiempoFinal}\nPresiona R para reiniciar\nEsc para salir", True, (255, 0, 0))
+            self.screen.blit(game_over_text, (self.width // 2 - game_over_text.get_width() // 2, self.height // 2 - game_over_text.get_height() // 2))
+        else:
+            win_text = self.font.render(f"¡Ganaste! \nTotal Puntos: {self.stats["puntos"]}\nTiempo Total: {self.tiempoFinal}\nPresiona R para reiniciar\nEsc para salir", True, (0, 255, 0))
+            self.screen.blit(win_text, (self.width // 2 - win_text.get_width() // 2, self.height // 2 - win_text.get_height() // 2))
         pygame.display.flip()
-        pygame.time.wait(10000)
+        
         
 
     def movimiento(self):
@@ -372,13 +495,20 @@ class Player:
                 self.partidaTerminada = True
                 self.tiempoRestante = 0
                 print("¡Tiempo agotado! Fin del juego.")
-                self.estado = "gameover"
+                if self.estado == "win": 
+                    self.tiempoFinal = self.tiempoRestante_str
+                else: 
+                    if self.tiempoRestante_str == "00:00":
+                        self.tiempoFinal = "00:00"
+                        self.estado = "gameover"
             #eventosPorTiempo
             elif self.tiempoRestante_str == "03:10":
                 self.npcs_escena["abajo"].append(self.npcTempB)
             elif self.tiempoRestante_str == f"0{self.randomMin}:{self.randomSec}":
                 self.npcs_escena["abajo"].append(self.npcTempA)
                 self.npcs_escena["arriba"].append(self.npcTempC)
+        else:
+            self.tiempoRestante_str = "00:00"
 
         #actualizacion del timer
         if self.dialogo_timer > 0:
@@ -482,7 +612,6 @@ class Player:
         puntos_txt = self.font.render(f"Puntos: {self.stats["puntos"]}", True, (255, 255, 255))
         self.screen.blit(puntos_txt, (20, 60))
         
-        
     def manejar_eventos(self, event):
         if self.estado == "mesa":
             if event.type == pygame.MOUSEBUTTONDOWN:
@@ -511,7 +640,7 @@ class Player:
                     break
 
             if candidato:
-                prompt = self.font.render(f"Presiona E para interaccionar con {candidato.name}", True, (255, 255, 255))
+                prompt = self.font.render(f"Presiona E para interactuar con {candidato.name}", True, (255, 255, 255))
                 self.screen.blit(prompt, (candidato.rect.centerx - self.scroll_x - 6,
                                         candidato.rect.top - 18 - self.scroll_y))
             if event.type == pygame.KEYDOWN and event.key == pygame.K_e and candidato:
@@ -527,5 +656,19 @@ class Player:
                     break
             if candidatoMesa and event.type == pygame.KEYDOWN and event.key == pygame.K_e:
                 candidatoMesa.try_interactTable(self)
+
+        if not self.partidaTerminada and all(not npc.enabled for npc in self.npcs) and not self.mesa.objetos and not self.inventario:
+            self.tiempoFinal = self.tiempoRestante_str
+            self.dialogo_actual = f"¡Felicidades! Has completado el juego. Total Puntos: {self.stats["puntos"]} tiempo total jugado {self.tiempoFinal}"
+            self.dialogo_timer = 8
+            self.estado = "win"
+
+        
+        if self.estado == "win" or self.estado == "gameover":
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                pygame.quit()
+                exit()
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_r:
+                self.reiniciar()
                         
 

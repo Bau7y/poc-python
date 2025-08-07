@@ -3,7 +3,6 @@ import pygame
 class MesaInteractuable:
     def __init__(self, rect, objetos):
         nombres = [objeto.nombre for objeto in objetos]
-        assert len(nombres) == len(set(nombres)), "Duplicado!"
         self.rect = rect
         self.objetos = objetos
         self.visible = True
