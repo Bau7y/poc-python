@@ -40,7 +40,7 @@ def history():
     historia = ["Año 2130. La humanidad lucha por sobrevivir bajo tierra.",
                 "Después de la gran inundación, todo cambió.",
                 "Los bunkers se convirtieron en el único refugio seguro...",
-                "Pero incluso ahí, no todos están a salvo."
+                "Un alma dedicada a la ayuda de gente sin hogar decide ayudar..."
             ]
     indexActual = 0
     alpha = 0 
