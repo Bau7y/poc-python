@@ -25,3 +25,7 @@ class PrincipalWindow(Tk):
         self.barraMnu.add_cascade(label="Ver", menu=self.mnuVer, underline=0)
         self.barraMnu.add_cascade(label="Buscar", menu=self.mnuBuscar, underline=0)
         self.configure(menu=self.barraMnu)
+
+class NewWindow(Toplevel):
+    def __init__(self, master = None):
+        super().__init__(master)
