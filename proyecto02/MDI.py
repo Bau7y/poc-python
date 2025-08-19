@@ -5,6 +5,11 @@
 from WindowCnfg import *
 from tkinter import messagebox
 
+def showFam1():
+    fam1 = VistaPersonasFam1()
+    fam1.grab_set()
+
+
 def newPerson():
     newPerson = NewPersonWindow()
     newPerson.grab_set()
@@ -12,6 +17,8 @@ def newPerson():
 def mnuHandler():
     screen.mnuArchivo.add_command(label="Nueva Persona", underline=0, command=newPerson)
     screen.mnuArchivo.add_command(label="Salir", command=screen.quit)
+
+    screen.mnuVer.add_command(label="Ver Familia 1", underline=0, command=showFam1)
 
 
 if __name__ == "__main__":
