@@ -55,9 +55,9 @@ class NewPersonWindow(Toplevel):
         self.lblCivilState = Label(self, text="Estado civil", bg="#FFFFFF", font=("Arial", 12), fg="#000000")
 
         self.txtName = Entry(self, bg="#FFFFFF", font=("Arial", 12))
-        self.txtLastName = Entry(self, bg="#FFFFFF", font=("Arial", 12), state="disabled")
-        self.txtLastName2 = Entry(self, bg="#FFFFFF", font=("Arial", 12), state="disabled")
-        self.txtId = Entry(self, bg="#FFFFFF", font=("Arial", 12), state="disabled")
+        self.txtLastName = Entry(self, bg="#FFFFFF", font=("Arial", 12))
+        self.txtLastName2 = Entry(self, bg="#FFFFFF", font=("Arial", 12))
+        self.txtId = Entry(self, bg="#FFFFFF", font=("Arial", 12))
         self.calBirthDate = DateEntry(self, width=27, background='darkblue', foreground='white', borderwidth=2, selectmode="day", date_pattern="dd/mm/yyyy")
         self.calDeathDate = DateEntry(self, width=27, background='darkblue', foreground='white', borderwidth=2, selectmode="day", date_pattern="dd/mm/yyyy")
         self.cmbxGender = ttk.Combobox(self, state="readonly", values=genderList, width=27)
@@ -66,8 +66,12 @@ class NewPersonWindow(Toplevel):
         self.cmbxGender.set("...")
         self.cmbxProvince.set("...")
         self.cmbxCivilState.set("Soltero")
+        self.txtId.insert(0, "0")
+        self.txtLastName.insert(0, "...")
+        self.txtLastName2.insert(0, "...")
+        self.txtName.insert(0, "...")
 
-        self.btnSave = Button(self, text="Guardar", font=("Arial", 12), state="disabled")
+        self.btnSave = Button(self, text="Guardar", font=("Arial", 12))
 
     def placeObjs(self):
         self.lblName.place(x=50, y=50)

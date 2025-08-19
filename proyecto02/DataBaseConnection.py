@@ -25,6 +25,12 @@ class DBConnection:
             listaPersonas.append(persona)
         return listaPersonas
     
+    def dataInsertFam1(self, per):
+        self.cursor.execute("INSERT INTO Personas (ID, Nombre, Apellido, Apellido2, FechaNacimiento, FechaFallecimiento, Genero, Provincia, EstadoCivil) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", 
+                            (int(per.getId()), per.getName(), per.getLastName1(), per.getLastName2(), per.getBirthDate(), per.getDeathDate(), per.getGender(), per.getProvince(), per.getCivilState()))
+        self.cursor.commit()
+
+    
     def delAllDataP1(self):
         self.cursor.execute("DELETE * FROM Personas")
         self.conn.commit()
