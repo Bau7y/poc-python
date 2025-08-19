@@ -1,7 +1,9 @@
 class Persona:
-    def __init__(self, personId, name, birthDate, deathDate, gender, province, civilState):
+    def __init__(self, personId, name, lastName1, lastName2, birthDate, deathDate, gender, province, civilState):
         self.personId = personId
         self.name = name
+        self.lastName1 = lastName1
+        self.lastName2 = lastName2
         self.birthDate = birthDate
         self.deathDate = deathDate
         self.gender = gender
@@ -15,6 +17,12 @@ class Persona:
     
     def getName(self):
         return self.name
+    
+    def getLastName1(self):
+        return self.lastName1
+    
+    def getLastName2(self):
+        return self.lastName2
     
     def getBirthDate(self):
         return self.birthDate
@@ -38,6 +46,12 @@ class Persona:
     
     def setName(self, newName):
         self.name = newName
+
+    def setLastName1(self, newLastName1):
+        self.lastName1 = newLastName1
+
+    def setLastName2(self, newLastName2):
+        self.lastName2 = newLastName2
     
     def setBirthDate(self, newBirthDate):
         self.birthDate = newBirthDate

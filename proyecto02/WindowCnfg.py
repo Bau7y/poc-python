@@ -2,6 +2,7 @@ from tkinter import *
 from tkinter import ttk
 from tkinter.font import *
 from DataBaseConnection import *
+from tkcalendar import DateEntry
 
 class PrincipalWindow(Tk):
     def __init__(self, master=None):
@@ -26,6 +27,86 @@ class PrincipalWindow(Tk):
         self.barraMnu.add_cascade(label="Buscar", menu=self.mnuBuscar, underline=0)
         self.configure(menu=self.barraMnu)
 
-class NewWindow(Toplevel):
+class NewPersonWindow(Toplevel):
     def __init__(self, master = None):
         super().__init__(master)
+        self.personWindowCnfg()
+        self.createObjs()
+        self.placeObjs()
+
+    def personWindowCnfg(self):
+        self["bg"] = "#FFFFFF"
+        self.resizable(False, False)
+        self.geometry("600x600")
+        self.title("Nueva persona")
+
+    def createObjs(self):
+        genderList = ["Masculino", "Femenino", "Otro"]
+        civilStateList = ["Soltero", "Casado", "Divorciado", "Viudo", "Union libre"]
+        provinceList = ["Alajuela", "Heredia", "Cartago", "Limón", "San José", "Guanacaste", "Puntarenas"]
+        self.lblName = Label(self, text="Nombre", bg="#FFFFFF", font=("Arial", 12))
+        self.lblLastName = Label(self, text="Apellido", bg="#FFFFFF", font=("Arial", 12))
+        self.lblLastName2 = Label(self, text="Segundo apellido", bg="#FFFFFF", font=("Arial", 12))
+        self.lblId = Label(self, text="Cédula", bg="#FFFFFF", font=("Arial", 12))
+        self.lblBirthDate = Label(self, text="Fecha de nacimiento", bg="#FFFFFF", font=("Arial", 12))
+        self.lblDeathDate = Label(self, text="Fecha de fallecimiento", bg="#FFFFFF", font=("Arial", 12))
+        self.lblGender = Label(self, text="Género", bg="#FFFFFF", font=("Arial", 12))
+        self.lblProvince = Label(self, text="Provincia", bg="#FFFFFF", font=("Arial", 12))
+        self.lblCivilState = Label(self, text="Estado civil", bg="#FFFFFF", font=("Arial", 12), fg="#000000")
+
+        self.txtName = Entry(self, bg="#FFFFFF", font=("Arial", 12))
+        self.txtLastName = Entry(self, bg="#FFFFFF", font=("Arial", 12))
+        self.txtLastName2 = Entry(self, bg="#FFFFFF", font=("Arial", 12))
+        self.txtId = Entry(self, bg="#FFFFFF", font=("Arial", 12))
+        self.calBirthDate = DateEntry(self, width=27, background='darkblue', foreground='white', borderwidth=2, selectmode="day", date_pattern="dd/mm/yyyy")
+        self.calDeathDate = DateEntry(self, width=27, background='darkblue', foreground='white', borderwidth=2, selectmode="day", date_pattern="dd/mm/yyyy")
+        self.cmbxGender = ttk.Combobox(self, state="readonly", values=genderList, width=27)
+        self.cmbxProvince = ttk.Combobox(self, state="readonly", values=provinceList, width=27)
+        self.cmbxCivilState = ttk.Combobox(self, state="readonly", values=civilStateList, width=27)
+        self.cmbxGender.set("...")
+        self.cmbxProvince.set("...")
+        self.cmbxCivilState.set("Soltero")
+
+        self.btnSave = Button(self, text="Guardar", font=("Arial", 12), state="disabled")
+
+    def placeObjs(self):
+        self.lblName.place(x=50, y=50)
+        self.lblLastName.place(x=50, y=100)
+        self.lblLastName2.place(x=50, y=150)
+        self.lblId.place(x=50, y=200)
+        self.lblBirthDate.place(x=50, y=250)
+        self.lblDeathDate.place(x=50, y=300)
+        self.lblGender.place(x=50, y=350)
+        self.lblProvince.place(x=50, y=400)
+        self.lblCivilState.place(x=50, y=450)
+
+        self.txtName.place(x=250, y=50)
+        self.txtLastName.place(x=250, y=100)
+        self.txtLastName2.place(x=250, y=150)
+        self.txtId.place(x=250, y=200)
+        self.calBirthDate.place(x=250, y=250)
+        self.calDeathDate.place(x=250, y=300)
+        self.cmbxGender.place(x=250, y=350)
+        self.cmbxProvince.place(x=250, y=400)
+        self.cmbxCivilState.place(x=250, y=450)
+
+        self.btnSave.place(x=250, y=500)
+
+class VistaPersonas:
+    def __init__(self, master = None):
+        super().__init__(master)
+        self.vistaPersonasCnfg()
+        self.createObjs()
+        self.placeObjs()
+    
+    def vistaPersonasCnfg(self):
+        self["bg"] = "#FFFFFF"
+        self.resizable(False, False)
+        self.geometry("600x600")
+        self.title("Vista personas")
+        self.focus_set()
+
+    def createObjs(self):
+        rowTitles = ["Cédula", "Nombre", "Apellido", "Segundo Apellido", "Fecha de nacimiento", "Fecha de fallecimiento", "Género", "Provincia", "Estado civil"]
+        
+
