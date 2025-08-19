@@ -16,13 +16,18 @@ class DBConnection:
         self.cursor.close()
         self.conn.close()
 
-    def getData(self):
+    def getDataP1(self):
         self.cursor.execute("SELECT * FROM Personas")
         data = self.cursor.fetchall()
         listaPersonas = []
         for row in data:
-            persona = Persona(personId=row[0], name=row[1], birthDate=row[2], deathDate=row[3], gender=row[4], province=row[5], civilState=row[6])
+            persona = Persona(personId=row[0], name=row[1], lastName1=row[2], lastName2=row[3], birthDate=row[4], deathDate=row[5], gender=row[6], province=row[7], civilState=row[8])
             listaPersonas.append(persona)
         return listaPersonas
+    
+    def delAllDataP1(self):
+        self.cursor.execute("DELETE * FROM Personas")
+        self.conn.commit()
+
 
 conn = DBConnection()
