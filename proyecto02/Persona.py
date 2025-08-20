@@ -1,5 +1,5 @@
 class Persona:
-    def __init__(self, personId, name, lastName1, lastName2, birthDate, deathDate, gender, province, civilState):
+    def __init__(self, personId, name, lastName1, lastName2, birthDate, deathDate, gender, province, civilState, nucleo):
         self.personId = personId
         self.name = name
         self.lastName1 = lastName1
@@ -9,6 +9,7 @@ class Persona:
         self.gender = gender
         self.province = province
         self.civilState = civilState
+        self.nucleo = nucleo
 
     #Métodos get
 
@@ -39,6 +40,9 @@ class Persona:
     def getCivilState(self):
         return self.civilState
     
+    def getNucleo(self):
+        return self.nucleo
+    
     # Métodos set
     
     def setId(self, newId):
@@ -67,3 +71,6 @@ class Persona:
     
     def setCivilState(self, newCivilState):
         self.civilState = newCivilState
+
+    def setNucleo(self, newNucleo):
+        self.nucleo = newNucleo

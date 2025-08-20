@@ -21,7 +21,7 @@ class DBConnection:
         data = self.cursor.fetchall()
         listaPersonas = []
         for row in data:
-            persona = Persona(personId=row[0], name=row[1], lastName1=row[2], lastName2=row[3], birthDate=row[4], deathDate=row[5], gender=row[6], province=row[7], civilState=row[8])
+            persona = Persona(personId=row[0], name=row[1], lastName1=row[2], lastName2=row[3], birthDate=row[4], deathDate=row[5], gender=row[6], province=row[7], civilState=row[8], nucleo=row[9])
             listaPersonas.append(persona)
         return listaPersonas
     
@@ -30,18 +30,18 @@ class DBConnection:
         data = self.cursor.fetchall()
         listaPersonas = []
         for row in data:
-            persona = Persona(personId=row[0], name=row[1], lastName1=row[2], lastName2=row[3], birthDate=row[4], deathDate=row[5], gender=row[6], province=row[7], civilState=row[8])
+            persona = Persona(personId=row[0], name=row[1], lastName1=row[2], lastName2=row[3], birthDate=row[4], deathDate=row[5], gender=row[6], province=row[7], civilState=row[8], nucleo=row[9])
             listaPersonas.append(persona)
         return listaPersonas
     
     def dataInsertFam1(self, per):
-        self.cursor.execute("INSERT INTO Personas (ID, Nombre, Apellido, Apellido2, FechaNacimiento, FechaFallecimiento, Genero, Provincia, EstadoCivil) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", 
-                            (int(per.getId()), per.getName().upper(), per.getLastName1().upper(), per.getLastName2().upper(), per.getBirthDate(), per.getDeathDate(), per.getGender(), per.getProvince(), per.getCivilState()))
+        self.cursor.execute("INSERT INTO Personas (ID, Nombre, Apellido, Apellido2, FechaNacimiento, FechaFallecimiento, Genero, Provincia, EstadoCivil) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", 
+                            (int(per.getId()), per.getName().upper(), per.getLastName1().upper(), per.getLastName2().upper(), per.getBirthDate(), per.getDeathDate(), per.getGender(), per.getProvince(), per.getCivilState(), per.getNucleo()))
         self.cursor.commit()
 
     def dataInsertFam2(self, per):
-        self.cursor.execute("INSERT INTO Personas2 (ID, Nombre, Apellido, Apellido2, FechaNacimiento, FechaFallecimiento, Genero, Provincia, EstadoCivil) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                            (int(per.getId()), per.getName().upper(), per.getLastName1().upper(), per.getLastName2().upper(), per.getBirthDate(), per.getDeathDate(), per.getGender(), per.getProvince(), per.getCivilState()))
+        self.cursor.execute("INSERT INTO Personas2 (ID, Nombre, Apellido, Apellido2, FechaNacimiento, FechaFallecimiento, Genero, Provincia, EstadoCivil) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                            (int(per.getId()), per.getName().upper(), per.getLastName1().upper(), per.getLastName2().upper(), per.getBirthDate(), per.getDeathDate(), per.getGender(), per.getProvince(), per.getCivilState(), per.getNucleo()))
         self.cursor.commit()
 
     

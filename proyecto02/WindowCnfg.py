@@ -45,6 +45,7 @@ class NewPersonWindow(Toplevel):
         genderList = ["Masculino", "Femenino", "Otro"]
         civilStateList = ["Soltero", "Casado", "Divorciado", "Viudo", "Union libre"]
         provinceList = ["Alajuela", "Heredia", "Cartago", "Limón", "San José", "Guanacaste", "Puntarenas"]
+        self.nucleos = [str(num for num in range(1,4))]
         self.lblName = Label(self, text="Nombre", bg="#FFFFFF", font=("Arial", 12))
         self.lblLastName = Label(self, text="Apellido", bg="#FFFFFF", font=("Arial", 12))
         self.lblLastName2 = Label(self, text="Segundo apellido", bg="#FFFFFF", font=("Arial", 12))
@@ -54,6 +55,7 @@ class NewPersonWindow(Toplevel):
         self.lblGender = Label(self, text="Género", bg="#FFFFFF", font=("Arial", 12))
         self.lblProvince = Label(self, text="Provincia", bg="#FFFFFF", font=("Arial", 12))
         self.lblCivilState = Label(self, text="Estado civil", bg="#FFFFFF", font=("Arial", 12), fg="#000000")
+        self.lblNucleo = Label(self, text="Núcleo Familiar", bg="#FFFFFF", font=("Arial", 12))
 
         self.txtName = Entry(self, bg="#FFFFFF", font=("Arial", 12))
         self.txtLastName = Entry(self, bg="#FFFFFF", font=("Arial", 12))
@@ -64,6 +66,7 @@ class NewPersonWindow(Toplevel):
         self.cmbxGender = ttk.Combobox(self, state="readonly", values=genderList, width=27)
         self.cmbxProvince = ttk.Combobox(self, state="readonly", values=provinceList, width=27)
         self.cmbxCivilState = ttk.Combobox(self, state="readonly", values=civilStateList, width=27)
+        self.cmbxNucleo = ttk.Combobox(self, state="readonly", values=self.nucleos, width=27)
         self.cmbxGender.set("...")
         self.cmbxProvince.set("...")
         self.cmbxCivilState.set("Soltero")
@@ -71,6 +74,7 @@ class NewPersonWindow(Toplevel):
         self.txtLastName.insert(0, "...")
         self.txtLastName2.insert(0, "...")
         self.txtName.insert(0, "...")
+        self.cmbxNucleo.set("1")
 
         self.btnSave = Button(self, text="Guardar", font=("Arial", 12))
 
@@ -84,6 +88,7 @@ class NewPersonWindow(Toplevel):
         self.lblGender.place(x=50, y=350)
         self.lblProvince.place(x=50, y=400)
         self.lblCivilState.place(x=50, y=450)
+        self.lblNucleo.place(x=50, y=500)
 
         self.txtName.place(x=250, y=50)
         self.txtLastName.place(x=250, y=100)
@@ -94,8 +99,9 @@ class NewPersonWindow(Toplevel):
         self.cmbxGender.place(x=250, y=350)
         self.cmbxProvince.place(x=250, y=400)
         self.cmbxCivilState.place(x=250, y=450)
+        self.cmbxNucleo.place(x=250, y=500)
 
-        self.btnSave.place(x=250, y=500)
+        self.btnSave.place(x=250, y=550)
 
 class VistaPersonasFam1(Toplevel):
     def __init__(self, fam, master = None):
@@ -108,12 +114,12 @@ class VistaPersonasFam1(Toplevel):
     def vistaPersonasCnfg(self):
         self["bg"] = "#FFFFFF"
         self.resizable(False, False)
-        self.geometry("1000x500")
+        self.geometry("1100x500")
         self.title("Vista personas")
         self.focus_set()
 
     def createObjs(self):
-        rowTitles = ("Cédula", "Nombre", "Apellido", "Segundo Apellido", "Fecha de nacimiento", "Fecha de fallecimiento", "Género", "Provincia", "Estado civil")
+        rowTitles = ("Cédula", "Nombre", "Apellido", "Segundo Apellido", "Fecha de nacimiento", "Fecha de fallecimiento", "Género", "Provincia", "Estado civil", "Nucleo Familiar")
         self.table = ttk.Treeview(self, columns=rowTitles, show="headings")
         self.table["columns"] = rowTitles
         self.table.column("Cédula", anchor=CENTER, width=100)
@@ -125,6 +131,7 @@ class VistaPersonasFam1(Toplevel):
         self.table.column("Género", anchor=CENTER, width=100)
         self.table.column("Provincia", anchor=CENTER, width=100)
         self.table.column("Estado civil", anchor=CENTER, width=100)
+        self.table.column("Nucleo Familiar", anchor=CENTER, width=100)
 
         self.table.heading("Cédula", text="Cédula", anchor=CENTER)
         self.table.heading("Nombre", text="Nombre", anchor=CENTER)
@@ -135,6 +142,7 @@ class VistaPersonasFam1(Toplevel):
         self.table.heading("Género", text="Género", anchor=CENTER)
         self.table.heading("Provincia", text="Provincia", anchor=CENTER)
         self.table.heading("Estado civil", text="Estado civil", anchor=CENTER)
+        self.table.heading("Nucleo Familiar", text="Nucleo Familiar", anchor=CENTER)
 
         conn = DBConnection()
         if self.idFam == 1:
@@ -144,7 +152,7 @@ class VistaPersonasFam1(Toplevel):
         conn.closeConnection()
 
         for persona in listaPersonasFam:
-            self.table.insert("", END, values=(persona.getId(), persona.getName(), persona.getLastName1(), persona.getLastName2(), persona.getBirthDate(), persona.getDeathDate(), persona.getGender(), persona.getProvince(), persona.getCivilState()))
+            self.table.insert("", END, values=(persona.getId(), persona.getName(), persona.getLastName1(), persona.getLastName2(), persona.getBirthDate(), persona.getDeathDate(), persona.getGender(), persona.getProvince(), persona.getCivilState(), persona.getNucleo()))
 
     def placeObjs(self):
         self.table.place(x=50, y=50)
