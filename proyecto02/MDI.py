@@ -13,6 +13,12 @@ def showFam1():
     fam1 = VistaPersonasFam1(1)
     fam1.grab_set()
 
+
+def showSearch():
+    search = Search()
+    search.grab_set()
+
+
 def savePersonFam2(newPerson):
     if newPerson.txtName.get() == "" or newPerson.txtLastName.get() == "" or newPerson.txtLastName2.get() == "" or newPerson.txtName.get() == "..." or newPerson.txtLastName.get() == "...":
         messagebox.showerror("Error", "Debe llenar todos los campos")
@@ -62,6 +68,8 @@ def mnuHandler():
 
     screen.mnuVer.add_command(label="Ver Familia 1", underline=0, command=showFam1)
     screen.mnuVer.add_command(label="Ver Familia 2", underline=0, command=showFam2)
+
+    screen.mnuBuscar.add_command(label="Buscar", underline=0, command=showSearch)
 
 
 if __name__ == "__main__":

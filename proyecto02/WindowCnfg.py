@@ -3,6 +3,7 @@ from tkinter import ttk
 from tkinter.font import *
 from DataBaseConnection import *
 from tkcalendar import DateEntry
+import tkinter as tk
 
 class PrincipalWindow(Tk):
     def __init__(self, master=None):
@@ -11,11 +12,11 @@ class PrincipalWindow(Tk):
         self.createObjs()
 
 
-    
     def windowCnfg(self):
         self["bg"] = "#000000"
         self.state("zoomed")
         self.title("Árbol genealógico")
+        self.resizable(False, False)
 
     def createObjs(self):
         self.barraMnu = Menu(self, bg="#000000", fg="#ffffff")
@@ -149,3 +150,46 @@ class VistaPersonasFam1(Toplevel):
         self.table.place(x=50, y=50)
         
 
+class Search(Toplevel):
+    def __init__(self, master = None):
+        super().__init__(master)
+        self.searchCnfg()
+        self.createObjs()
+        self.placeObjs()
+
+    def searchCnfg(self):
+        self["bg"] = "#FFFFFF"
+        self.resizable(False, False)
+        self.geometry("300x300+10+10")
+        self.title("Buscar persona")
+        self.focus_set()
+
+    def createObjs(self):
+        self.choice = IntVar(value=0)
+        self.radFamChoice = tk.Radiobutton(self, text="Familia 1", variable=self.choice, value=1)
+        self.radFamChoice2 = tk.Radiobutton(self, text="Familia 2", variable=self.choice, value=2)
+
+        self.btnSelected = Button(self, text="Seleccionar", font=("Arial", 12))
+        
+
+    
+    def placeObjs(self):
+        self.radFamChoice.place(x=50, y=50)
+        self.radFamChoice2.place(x=150, y=50)
+
+        self.btnSelected.place(x=90, y=150)
+
+class AfterSearch(Toplevel):
+    def __init__(self, master = None):
+        super().__init__(master)
+        self.afterSearchCnfg()
+        self.createObjs()
+        self.placeObjs()
+
+    
+    def afterSearchCnfg(self):
+        self["bg"] = "#FFFFFF"
+        self.resizable(False, False)
+        self.geometry("600x600")
+        self.title("Datos de Familia")
+        self.focus_set()
