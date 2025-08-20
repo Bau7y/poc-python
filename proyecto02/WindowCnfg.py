@@ -97,8 +97,9 @@ class NewPersonWindow(Toplevel):
         self.btnSave.place(x=250, y=500)
 
 class VistaPersonasFam1(Toplevel):
-    def __init__(self, master = None):
+    def __init__(self, fam, master = None):
         super().__init__(master)
+        self.idFam = fam
         self.vistaPersonasCnfg()
         self.createObjs()
         self.placeObjs()
@@ -135,10 +136,13 @@ class VistaPersonasFam1(Toplevel):
         self.table.heading("Estado civil", text="Estado civil", anchor=CENTER)
 
         conn = DBConnection()
-        listaPersonasFam1 = conn.getDataP1()
+        if self.idFam == 1:
+            listaPersonasFam = conn.getDataP1()
+        else:
+            listaPersonasFam = conn.getDataPer2()
         conn.closeConnection()
 
-        for persona in listaPersonasFam1:
+        for persona in listaPersonasFam:
             self.table.insert("", END, values=(persona.getId(), persona.getName(), persona.getLastName1(), persona.getLastName2(), persona.getBirthDate(), persona.getDeathDate(), persona.getGender(), persona.getProvince(), persona.getCivilState()))
 
     def placeObjs(self):
