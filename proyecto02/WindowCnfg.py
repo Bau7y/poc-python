@@ -45,7 +45,7 @@ class NewPersonWindow(Toplevel):
         genderList = ["Masculino", "Femenino", "Otro"]
         civilStateList = ["Soltero", "Casado", "Divorciado", "Viudo", "Union libre"]
         provinceList = ["Alajuela", "Heredia", "Cartago", "Limón", "San José", "Guanacaste", "Puntarenas"]
-        self.nucleos = [str(num for num in range(1,4))]
+        self.nucleos = [str(num for num in range(0,4))]
         self.lblName = Label(self, text="Nombre", bg="#FFFFFF", font=("Arial", 12))
         self.lblLastName = Label(self, text="Apellido", bg="#FFFFFF", font=("Arial", 12))
         self.lblLastName2 = Label(self, text="Segundo apellido", bg="#FFFFFF", font=("Arial", 12))
