@@ -39,50 +39,11 @@ class DBConnection:
                             (int(per.getId()), per.getName().upper(), per.getLastName1().upper(), per.getLastName2().upper(), per.getBirthDate(), per.getDeathDate(), per.getGender(), per.getProvince(), per.getCivilState(), per.getNucleo()))
         self.cursor.commit()
 
-        self.cursor.execute("SELECT @@IDENTITY")
-        newId = self.cursor.fetchone()[0]
-
-        self.actualizarRelaciones(int(per.getNucleo()))
-        
-
-        return newId
-    
-    def actualizarRelaciones(self, nucleo):
-        self.cursor.execute("SELECT ID FROM Personas WHERE IdNucleo=?", (nucleo))
-        ids = [row[0] for row in self.cursor.fetchall()]
-
-        if len(ids) >= 2:
-            id1, id2 = ids[0], ids[1]
-            self.cursor.execute("INSERT INTO RelacionesFam1 (IdUnion, IdPadre, IdMadre) VALUES (?, ?, ?)", (nucleo, id1, id2))
-            self.cursor.commit()
-
 
     def dataInsertFam2(self, per):
         self.cursor.execute("INSERT INTO Personas2 (ID, Nombre, Apellido, Apellido2, FechaNacimiento, FechaFallecimiento, Genero, Provincia, EstadoCivil, IdNucleo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                             (int(per.getId()), per.getName().upper(), per.getLastName1().upper(), per.getLastName2().upper(), per.getBirthDate(), per.getDeathDate(), per.getGender(), per.getProvince(), per.getCivilState(), int(per.getNucleo())))
         self.cursor.commit()
-
-        self.cursor.execute("SELECT @@IDENTITY")
-        newId = self.cursor.fetchone()[0]
-
-        self.actualizarRelacionesFam2(int(per.getNucleo()))
-
-        return newId
-    
-    def actualizarRelacionesFam2(self, nucleo):
-        self.cursor.execute("SELECT ID FROM Personas2 WHERE IdNucleo=?", (nucleo))
-        ids = [row[0] for row in self.cursor.fetchall()]
-
-        if len(ids) >= 2:
-            id1, id2 = ids[0], ids[1]
-
-            self.cursor.execute("SELECT COUNT(*) FROM RelacionesFam2 WHERE IdNucleo=?", (nucleo))
-            existe = self.cursor.fetchone()[0]
-            if existe == 0:
-                self.cursor.execute("INSERT INTO RelacionesFam2 (IdUnion, IdPadre, IdMadre) VALUES (?, ?, ?)", (nucleo,id1, id2))
-            else:
-                self.cursor.execute("UPDATE RelacionesFam2 SET IdPadre=?, IdMadre=? WHERE IdUnion=?", (id1, id2, nucleo))
-            self.cursor.commit()
 
     
     def delAllDataP1(self):

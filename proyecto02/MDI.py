@@ -66,16 +66,20 @@ def newPerson():
     newPerson.grab_set()
 
 def borrarTodo():
-    conn = DBConnection()
-    conn.delAllDataP1()
-    conn.delAllDataP2()
-    conn.closeConnection()
-    messagebox.showinfo("Éxito", "Se borraron todos los datos de la familia 1")
+    answer = messagebox.askyesno("Borrar todo", "¿Está seguro que desea borrar todos los datos?")
+    if answer:
+        conn = DBConnection()
+        conn.delAllDataP1()
+        conn.delAllDataP2()
+        conn.closeConnection()
+        messagebox.showinfo("Éxito", "Se borraron todos los datos de la familia 1 y 2")
 
 
 def mnuHandler():
     screen.mnuArchivo.add_command(label="Añadir a Familia 1", underline=0, command=newPerson)
     screen.mnuArchivo.add_command(label="Añadir a Familia 2", underline=0, command=newPersonFam2)
+    screen.mnuArchivo.add_separator()
+    screen.mnuArchivo.add_command(label="")
     screen.mnuArchivo.add_command(label="Borrar todo", underline=0, command=borrarTodo)
     screen.mnuArchivo.add_command(label="Salir", command=screen.quit)
 
