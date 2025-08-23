@@ -65,10 +65,18 @@ def newPerson():
     newPerson.btnSave.configure(command = lambda: savePerson(newPerson))
     newPerson.grab_set()
 
+def borrarTodo():
+    conn = DBConnection()
+    conn.delAllDataP1()
+    conn.delAllDataP2()
+    conn.closeConnection()
+    messagebox.showinfo("Éxito", "Se borraron todos los datos de la familia 1")
+
 
 def mnuHandler():
     screen.mnuArchivo.add_command(label="Añadir a Familia 1", underline=0, command=newPerson)
     screen.mnuArchivo.add_command(label="Añadir a Familia 2", underline=0, command=newPersonFam2)
+    screen.mnuArchivo.add_command(label="Borrar todo", underline=0, command=borrarTodo)
     screen.mnuArchivo.add_command(label="Salir", command=screen.quit)
 
     screen.mnuVer.add_command(label="Ver Familia 1", underline=0, command=showFam1)

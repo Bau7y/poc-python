@@ -35,7 +35,7 @@ class DBConnection:
         return listaPersonas
     
     def dataInsertFam1(self, per):
-        self.cursor.execute("INSERT INTO Personas (ID, Nombre, Apellido, Apellido2, FechaNacimiento, FechaFallecimiento, Genero, Provincia, EstadoCivil) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", 
+        self.cursor.execute("INSERT INTO Personas (ID, Nombre, Apellido, Apellido2, FechaNacimiento, FechaFallecimiento, Genero, Provincia, EstadoCivil, IdNucleo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", 
                             (int(per.getId()), per.getName().upper(), per.getLastName1().upper(), per.getLastName2().upper(), per.getBirthDate(), per.getDeathDate(), per.getGender(), per.getProvince(), per.getCivilState(), per.getNucleo()))
         self.cursor.commit()
 
@@ -43,22 +43,17 @@ class DBConnection:
         newId = self.cursor.fetchone()[0]
 
         self.actualizarRelaciones(int(per.getNucleo()))
+        
 
         return newId
     
     def actualizarRelaciones(self, nucleo):
-        self.cursor.execute("SELECT ID FROM Personas WHERE IdNucleo=?", (nucleo,))
+        self.cursor.execute("SELECT ID FROM Personas WHERE IdNucleo=?", (nucleo))
         ids = [row[0] for row in self.cursor.fetchall()]
 
         if len(ids) >= 2:
             id1, id2 = ids[0], ids[1]
-
-            self.cursor.execute("SELECT COUNT(*) FROM RelacionesFam1 WHERE IdNucleo=?", (nucleo, ))
-            existe = self.cursor.fetchone()[0]
-            if existe == 0:
-                self.cursor.execute("INSERT INTO RelacionesFam1 (IdUnion, IdPadre, IdMadre) VALUES (?, ?, ?)", (nucleo, id1, id2))
-            else:
-                self.cursor.execute("UPDATE RelacionesFam1 SET IdPadre=?, IdMadre=? WHERE IdUnion=?", (id1, id2, nucleo))
+            self.cursor.execute("INSERT INTO RelacionesFam1 (IdUnion, IdPadre, IdMadre) VALUES (?, ?, ?)", (nucleo, id1, id2))
             self.cursor.commit()
 
 
@@ -75,13 +70,13 @@ class DBConnection:
         return newId
     
     def actualizarRelacionesFam2(self, nucleo):
-        self.cursor.execute("SELECT ID FROM Personas2 WHERE IdNucleo=?", (nucleo, ))
+        self.cursor.execute("SELECT ID FROM Personas2 WHERE IdNucleo=?", (nucleo))
         ids = [row[0] for row in self.cursor.fetchall()]
 
         if len(ids) >= 2:
             id1, id2 = ids[0], ids[1]
 
-            self.cursor.execute("SELECT COUNT(*) FROM RelacionesFam2 WHERE IdNucleo=?", (nucleo,))
+            self.cursor.execute("SELECT COUNT(*) FROM RelacionesFam2 WHERE IdNucleo=?", (nucleo))
             existe = self.cursor.fetchone()[0]
             if existe == 0:
                 self.cursor.execute("INSERT INTO RelacionesFam2 (IdUnion, IdPadre, IdMadre) VALUES (?, ?, ?)", (nucleo,id1, id2))
@@ -92,6 +87,12 @@ class DBConnection:
     
     def delAllDataP1(self):
         self.cursor.execute("DELETE * FROM Personas")
+        self.cursor.execute("DELETE * FROM RelacionesFam1")
+        self.conn.commit()
+    
+    def delAllDataP2(self):
+        self.cursor.execute("DELETE * FROM Personas2")
+        self.cursor.execute("DELETE * FROM RelacionesFam2")
         self.conn.commit()
 
 
