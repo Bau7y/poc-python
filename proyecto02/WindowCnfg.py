@@ -45,7 +45,7 @@ class NewPersonWindow(Toplevel):
         genderList = ["Masculino", "Femenino", "Otro"]
         civilStateList = ["Soltero", "Casado", "Divorciado", "Viudo", "Union libre"]
         provinceList = ["Alajuela", "Heredia", "Cartago", "Limón", "San José", "Guanacaste", "Puntarenas"]
-        self.nucleos = [str(num for num in range(0,4))]
+        self.nucleos = ["0", "1", "2", "3", "4"]
         self.lblName = Label(self, text="Nombre", bg="#FFFFFF", font=("Arial", 12))
         self.lblLastName = Label(self, text="Apellido", bg="#FFFFFF", font=("Arial", 12))
         self.lblLastName2 = Label(self, text="Segundo apellido", bg="#FFFFFF", font=("Arial", 12))
@@ -74,7 +74,7 @@ class NewPersonWindow(Toplevel):
         self.txtLastName.insert(0, "...")
         self.txtLastName2.insert(0, "...")
         self.txtName.insert(0, "...")
-        self.cmbxNucleo.set("1")
+        self.cmbxNucleo.set("0")
 
         self.btnSave = Button(self, text="Guardar", font=("Arial", 12))
 

@@ -5,9 +5,11 @@
 from WindowCnfg import *
 from tkinter import messagebox
 
+
 def showFam2():
     fam2 = VistaPersonasFam1(2)
     fam2.grab_set()
+
 
 def showFam1():
     fam1 = VistaPersonasFam1(1)
@@ -26,7 +28,7 @@ def savePersonFam2(newPerson):
         try:
             per = Persona(personId = int(newPerson.txtId.get()), name=newPerson.txtName.get(), lastName1=newPerson.txtLastName.get(), 
                         lastName2=newPerson.txtLastName2.get(), birthDate=str(newPerson.calBirthDate.get()), deathDate=str(newPerson.calDeathDate.get()),
-                            gender=newPerson.cmbxGender.get(), province=newPerson.cmbxProvince.get(), civilState=newPerson.cmbxCivilState.get())
+                            gender=newPerson.cmbxGender.get(), province=newPerson.cmbxProvince.get(), civilState=newPerson.cmbxCivilState.get(), nucleo=int(newPerson.cmbxNucleo.get()))
             conn = DBConnection()
             conn.dataInsertFam2(per)
             conn.closeConnection()
@@ -42,7 +44,7 @@ def savePerson(newPerson):
         try:
             per = Persona(personId = int(newPerson.txtId.get()), name=newPerson.txtName.get(), lastName1=newPerson.txtLastName.get(), 
                         lastName2=newPerson.txtLastName2.get(), birthDate=str(newPerson.calBirthDate.get()), deathDate=str(newPerson.calDeathDate.get()),
-                            gender=newPerson.cmbxGender.get(), province=newPerson.cmbxProvince.get(), civilState=newPerson.cmbxCivilState.get())
+                            gender=newPerson.cmbxGender.get(), province=newPerson.cmbxProvince.get(), civilState=newPerson.cmbxCivilState.get(), nucleo=int(newPerson.cmbxNucleo.get()))
             conn = DBConnection()
             conn.dataInsertFam1(per)
             conn.closeConnection()
@@ -51,15 +53,18 @@ def savePerson(newPerson):
         except:
             messagebox.showerror("Error", "La persona no pudo ser registrada...")
 
+
 def newPersonFam2():
     newPerson = NewPersonWindow()
     newPerson.btnSave.configure(command = lambda: savePersonFam2(newPerson))
     newPerson.grab_set()
 
+
 def newPerson():
     newPerson = NewPersonWindow()
     newPerson.btnSave.configure(command = lambda: savePerson(newPerson))
     newPerson.grab_set()
+
 
 def mnuHandler():
     screen.mnuArchivo.add_command(label="Añadir a Familia 1", underline=0, command=newPerson)
