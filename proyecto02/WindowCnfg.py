@@ -238,7 +238,7 @@ class Search(Toplevel):
         self.focus_set()
 
     def createObjs(self):
-        self.choice = IntVar(value=0)
+        self.choice = IntVar()
         self.radFamChoice = tk.Radiobutton(self, text="Familia 1", variable=self.choice, value=1)
         self.radFamChoice2 = tk.Radiobutton(self, text="Familia 2", variable=self.choice, value=2)
 
@@ -266,3 +266,23 @@ class AfterSearch(Toplevel):
         self.geometry("600x600")
         self.title("Datos de Familia")
         self.focus_set()
+
+    def createObjs(self):
+        questions = ("¿Cuál es la relación entre persona A y persona B?", "¿Quiénes son los primos de primer grado de X?", 
+                     "¿Cuáles son todos los antepasados maternos de X?", "¿Cuáles descendientes de X están vivos actualmente?",
+                     "¿Cuántas personas nacieron en los últimos 10 años?", "¿Cuáles parejas actuales tienen 2 o más hijos en común?",
+                     "¿Cuántas personas fallecieron antes de cumplir 50 años?")
+        self.lblReqId = Label(self, text="Ingrese la cédula de las personas:", bg="#FFFFFF", font=("Arial", 12))
+
+        self.txtReqId = Entry(self, bg="#FFFFFF", font=("Arial", 12))
+        self.txtReqId2 = Entry(self, bg="#FFFFFF", font=("Arial", 12))
+
+        self.btnSearch = Button(self, text="Buscar", font=("Arial", 12))
+        self.btnAccept = Button(self, text="Aceptar", font=("Arial", 12))
+
+        self.cmbxOptions = ttk.Combobox(self, state="readonly", values=questions, width=50)
+
+    
+    def placeObjs(self):
+        self.cmbxOptions.place(x=50, y=50)
+        self.btnAccept.place(x=400, y=50)
