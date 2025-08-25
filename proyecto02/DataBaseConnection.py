@@ -57,4 +57,18 @@ class DBConnection:
         self.conn.commit()
 
 
+    def searchPerson(self, pid, fam):
+        if fam == 1:
+            self.cursor.execute("SELECT * FROM Personas WHERE ID = ?", (pid))
+        else:
+            self.cursor.execute("SELECT * FROM Personas2 WHERE ID = ?", (pid))
+        data = self.cursor.fetchone()
+        if data != None:
+            person = Persona(personId=data[0], name=data[1], lastName1=data[2], lastName2=data[3], birthDate=data[4], 
+                             deathDate=data[5], gender=data[6], province=data[7], civilState=data[8], nucleo=data[9])
+            return person
+        else:
+            return None
+        
+
 conn = DBConnection()
