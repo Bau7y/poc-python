@@ -79,7 +79,9 @@ def mnuHandler():
     screen.mnuArchivo.add_command(label="Añadir a Familia 1", underline=0, command=newPerson)
     screen.mnuArchivo.add_command(label="Añadir a Familia 2", underline=0, command=newPersonFam2)
     screen.mnuArchivo.add_separator()
-    screen.mnuArchivo.add_command(label="")
+    screen.mnuArchivo.add_command(label="Anexar Padres Familia 1")
+    screen.mnuArchivo.add_command(label="Anexar Padres Familia 2")
+    screen.mnuArchivo.add_separator()
     screen.mnuArchivo.add_command(label="Borrar todo", underline=0, command=borrarTodo)
     screen.mnuArchivo.add_command(label="Salir", command=screen.quit)
 

@@ -10,6 +10,7 @@ class PrincipalWindow(Tk):
         super().__init__(master)
         self.windowCnfg()
         self.createObjs()
+        self.placeObjs()
 
 
     def windowCnfg(self):
@@ -27,6 +28,70 @@ class PrincipalWindow(Tk):
         self.barraMnu.add_cascade(label="Ver", menu=self.mnuVer, underline=0)
         self.barraMnu.add_cascade(label="Buscar", menu=self.mnuBuscar, underline=0)
         self.configure(menu=self.barraMnu)
+
+        self.leftFrame = tk.Frame(self, bg="lightgray", width=self.winfo_screenwidth() // 2, height=self.winfo_screenheight())
+        self.rightFrame = tk.Frame(self, bg="lightgray", width=self.winfo_screenwidth() // 2, height=self.winfo_screenheight())
+
+        self.lblBisAbueloPa1 = Label(self.leftFrame, text="Bisabuelo paterno", bg="lightgray", font=("Arial", 12), fg="black")
+        self.lblBisAbueloMa1 = Label(self.leftFrame, text="Bisabuelo materno", bg="lightgray", font=("Arial", 12), fg="black")
+        self.lblBisAbueloPa2 = Label(self.leftFrame, text="Bisabuelo paterno", bg="lightgray", font=("Arial", 12), fg="black")
+        self.lblBisAbueloMa2 = Label(self.leftFrame, text="Bisabuelo materno", bg="lightgray", font=("Arial", 12), fg="black")
+
+        self.lblAbueloPa1 = Label(self.leftFrame, text="Abuelo paterno", bg="lightgray", font=("Arial", 12), fg="black")
+        self.lblAbueloPa2 = Label(self.leftFrame, text="Abuelo paterno", bg="lightgray", font=("Arial", 12), fg="black")
+        self.lblAbueloMa1 = Label(self.leftFrame, text="Abuelo Materno", bg="lightgray", font=("Arial", 12), fg="black")
+        self.lblAbueloMa2 = Label(self.leftFrame, text="Abuelo Materno", bg="lightgray", font=("Arial", 12), fg="black")
+
+        self.lblPadre1 = Label(self.leftFrame, text="Padre", bg="lightgray", font=("Arial", 12), fg="black")
+        self.lblMadre1 = Label(self.leftFrame, text="Madre", bg="lightgray", font=("Arial", 12), fg="black")
+
+        self.lblTio1 = Label(self.leftFrame, text="Tío", bg="lightgray", font=("Arial", 12), fg="black")
+        self.lblTia1 = Label(self.leftFrame, text="Tía", bg="lightgray", font=("Arial", 12), fg="black")
+        self.lblTio2 = Label(self.leftFrame, text="Tío", bg="lightgray", font=("Arial", 12), fg="black")
+        self.lblTia2 = Label(self.leftFrame, text="Tía", bg="lightgray", font=("Arial", 12), fg="black")
+
+        self.lblHijo1 = Label(self.leftFrame, text="Hijo", bg="lightgray", font=("Arial", 12), fg="black")
+        self.lblHijo2 = Label(self.leftFrame, text="Hijo", bg="lightgray", font=("Arial", 12), fg="black")
+        self.lblHijo3 = Label(self.leftFrame, text="Hijo", bg="lightgray", font=("Arial", 12), fg="black")
+        self.lblHijo4 = Label(self.leftFrame, text="Hijo", bg="lightgray", font=("Arial", 12), fg="black")
+        self.lblHijo5 = Label(self.leftFrame, text="Hijo", bg="lightgray", font=("Arial", 12), fg="black")
+        self.lblHijo6 = Label(self.leftFrame, text="Hijo", bg="lightgray", font=("Arial", 12), fg="black")
+
+        self.lblFutHijo = Label(self.leftFrame, text="Hijo futuro", bg="lightgray", font=("Arial", 12), fg="black")
+        self.lblFutHijo2 = Label(self.leftFrame, text="Hijo futuro", bg="lightgray", font=("Arial", 12), fg="black")
+        self.lblFutHijo3 = Label(self.leftFrame, text="Hijo futuro", bg="lightgray", font=("Arial", 12), fg="black")
+        self.lblFutHijo4 = Label(self.leftFrame, text="Hijo futuro", bg="lightgray", font=("Arial", 12), fg="black")
+
+
+
+
+    def placeObjs(self):
+        self.leftFrame.pack(side="left", fill="y")
+        self.rightFrame.pack(side="right", fill="y")
+        self.lblBisAbueloPa1.place(x=60, y=10)
+        self.lblBisAbueloPa2.place(x=210, y=10)
+
+        self.lblBisAbueloMa1.place(x=430, y=10)
+        self.lblBisAbueloMa2.place(x=580, y=10)
+
+        self.lblAbueloMa1.place(x=60, y=100)
+        self.lblAbueloMa2.place(x=210, y=100)
+        
+        self.lblAbueloPa1.place(x=430, y=100)
+        self.lblAbueloPa2.place(x=580, y=100)
+
+        self.lblPadre1.place(x=420, y=190)
+        self.lblTio1.place(x=50, y=190)
+        self.lblTia1.place(x=160, y=190)
+
+        self.lblMadre1.place(x=280, y=190)
+        self.lblTio2.place(x=550, y=190)
+        self.lblTia2.place(x=700, y=190)
+
+        self.lblHijo1.place(x=100, y=280)
+        self.lblHijo2.place(x=360, y=280)
+        self.lblHijo3.place(x=620, y=280)
+        
 
 class NewPersonWindow(Toplevel):
     def __init__(self, master = None):
