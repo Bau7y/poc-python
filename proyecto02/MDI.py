@@ -23,14 +23,15 @@ def personFound(newSearch, fam):
         conn.closeConnection()
         if person1 != None and person2 != None:
             messagebox.showinfo("Éxito", "La persona fue encontrada con éxito!!!", parent=newSearch)
-            
+            newSearch.txtReqId.place_forget()
+            newSearch.lblReqId.place_forget()
+            newSearch.txtReqId2.place_forget()
+            newSearch.btnSearch.place_forget()
         else:
             messagebox.showerror("Error", "No se encontró a la persona", parent=newSearch)
     except ValueError:
         messagebox.showerror("Error", "Debe ingresar un ID válido", parent=newSearch)
 
-def relationBetween(newSearch):
-    pass
 
 def questionHandler(newSearch, fam):
     if newSearch.cmbxOptions.get() == "¿Cuál es la relación entre persona A y persona B?":
@@ -56,7 +57,6 @@ def lookingFor(searchWindow):
     if searchWindow.choice.get() == 1 or searchWindow.choice.get() == 2:
         searchWindow.destroy()
         newSearch = AfterSearch()
-        #newSearch.btnSearch.configure(command=lambda: personFound(newSearch, searchWindow.choice.get()))
         newSearch.btnAccept.configure(command= lambda: questionHandler(newSearch, searchWindow.choice.get()))
     else:
         messagebox.showerror("Error", "Debe seleccionar una opcion", parent=searchWindow)
@@ -134,6 +134,9 @@ def mnuHandler():
 
     screen.mnuVer.add_command(label="Ver Familia 1", underline=0, command=showFam1)
     screen.mnuVer.add_command(label="Ver Familia 2", underline=0, command=showFam2)
+    screen.mnuVer.add_separator()
+    screen.mnuVer.add_command(label="Ver Linea de Tiempo Familia 1")
+    screen.mnuVer.add_command(label="Ver Linea de Tiempo Familia 2")
 
     screen.mnuBuscar.add_command(label="Buscar", underline=0, command=showSearch)
 

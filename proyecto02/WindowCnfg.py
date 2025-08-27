@@ -286,3 +286,32 @@ class AfterSearch(Toplevel):
     def placeObjs(self):
         self.cmbxOptions.place(x=50, y=50)
         self.btnAccept.place(x=400, y=50)
+
+
+class FatherSonWindow(Toplevel):
+    def __init__(self, master = None):
+        super().__init__(master)
+        self.fatherSonCnfg()
+        self.createObjs()
+        self.placeObjs()
+
+    def fatherSonCnfg(self):
+        self["bg"] = "#FFFFFF"
+        self.resizable(False, False)
+        self.geometry("600x600")
+        self.title("Padre e hijo")
+        self.focus_set()
+
+    def createObjs(self):
+        self.lblIdFather = Label(self, text="Cédula del padre", bg="#FFFFFF", font=("Arial", 12))
+        self.lblIdSon = Label(self, text="Cédula del hijo", bg="#FFFFFF", font=("Arial", 12))
+        self.txtIdFather = Entry(self, bg="#FFFFFF", font=("Arial", 12))
+        self.txtIdSon = Entry(self, bg="#FFFFFF", font=("Arial", 12))
+        self.btnAccept = Button(self, text="Aceptar", font=("Arial", 12))
+
+    def placeObjs(self):
+        self.lblIdFather.place(x=50, y=50)
+        self.lblIdSon.place(x=50, y=100)
+        self.txtIdFather.place(x=250, y=50)
+        self.txtIdSon.place(x=250, y=100)
+        self.btnAccept.place(x=250, y=150)
