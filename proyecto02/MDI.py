@@ -15,6 +15,19 @@ def showFam1():
     fam1 = VistaPersonasFam1(1)
     fam1.grab_set()
 
+
+def addParentsFam1():
+    add1 = FatherSonWindow()
+    add1.btnAccept.configure(command=lambda: add1.insertParentChild(1, add1))
+    add1.grab_set()
+
+
+def addParentsFam2():
+    add2 = FatherSonWindow()
+    add2.btnAccept.configure(command=lambda: add2.insertParentChild(2, add2))
+    add2.grab_set()
+
+
 def personFound(newSearch, fam):
     try:
         conn = DBConnection()
@@ -126,8 +139,8 @@ def mnuHandler():
     screen.mnuArchivo.add_command(label="Añadir a Familia 1", underline=0, command=newPerson)
     screen.mnuArchivo.add_command(label="Añadir a Familia 2", underline=0, command=newPersonFam2)
     screen.mnuArchivo.add_separator()
-    screen.mnuArchivo.add_command(label="Anexar Padres Familia 1")
-    screen.mnuArchivo.add_command(label="Anexar Padres Familia 2")
+    screen.mnuArchivo.add_command(label="Anexar Padres Familia 1", command=addParentsFam1)
+    screen.mnuArchivo.add_command(label="Anexar Padres Familia 2", command=addParentsFam2)
     screen.mnuArchivo.add_separator()
     screen.mnuArchivo.add_command(label="Borrar todo", underline=0, command=borrarTodo)
     screen.mnuArchivo.add_command(label="Salir", command=screen.quit)
