@@ -15,16 +15,65 @@ def showFam1():
     fam1 = VistaPersonasFam1(1)
     fam1.grab_set()
 
+def insertParentChild(fam: int, win):
+    try:
+        parent_id = int(win.txtIdFather.get().strip())
+        child_id  = int(win.txtIdSon.get().strip())
+    except ValueError:
+        messagebox.showerror("Error", "Las cédulas deben ser numéricas.", parent=win)
+        return
+
+    conn = DBConnection()
+    try:
+        # Valida existencia de ambos
+        parent = conn.searchPerson(parent_id, fam)
+        child  = conn.searchPerson(child_id, fam)
+        if parent is None or child is None:
+            messagebox.showerror("Error", "Padre o hijo no existen en la familia seleccionada.", parent=win)
+            return
+
+        # Inserta vínculo padre-hijo
+        created = conn.insert_parent_child_PH(parent_id, child_id, fam)
+        if not created:
+            messagebox.showinfo("Información", "La relación padre/hijo ya existía.", parent=win)
+        else:
+            messagebox.showinfo("Éxito", "Relación padre/hijo registrada.", parent=win)
+
+        # Busca si este hijo ya tenía otro progenitor
+        other_parent_id = conn.get_other_parent_for_child(child_id, parent_id, fam)
+        if other_parent_id:
+            try:
+                made_union = conn.ensure_union_if_shared_child(parent_id, other_parent_id, fam)
+                if made_union:
+                    messagebox.showinfo(
+                        "Éxito",
+                        f"Se registró la pareja automáticamente (comparten hijo): {parent_id} y {other_parent_id}",
+                        parent=win
+                    )
+            except Exception as e:
+                messagebox.showwarning(
+                    "Atención",
+                    "Padre/hijo guardado. No se pudo crear la unión automática.\n"
+                    "Revisa nombres/columnas de RelacionesFam{fam}.\n\n"
+                    f"Detalle: {e}",
+                    parent=win
+                )
+
+        win.destroy()
+
+    finally:
+        conn.closeConnection()
+
 
 def addParentsFam1():
     add1 = FatherSonWindow()
-    add1.btnAccept.configure(command=lambda: add1.insertParentChild(1, add1))
+    add1.btnAccept.configure(command=lambda: insertParentChild(1, add1))
     add1.grab_set()
 
 
 def addParentsFam2():
     add2 = FatherSonWindow()
-    add2.btnAccept.configure(command=lambda: add2.insertParentChild(2, add2))
+    add2.btnAccept.configure(command=lambda: insertParentChild(2, add2))
     add2.grab_set()
 
 
