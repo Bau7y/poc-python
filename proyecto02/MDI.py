@@ -6,6 +6,28 @@ from WindowCnfg import *
 from tkinter import messagebox
 
 
+def simulation_tick(root):
+    conn = DBConnection()
+    try:
+        total_deaths = 0
+        total_births = 0
+        for fam in (1, 2):
+            conn.tick_birthdays(fam)
+            total_deaths += conn.tick_deaths(fam, prob=0.03)
+            total_births += conn.tick_births(fam, prob_per_couple=0.20)
+
+        # usa winfo_toplevel() para subir hasta la ventana raíz
+        root.winfo_toplevel().title(
+            f"Árbol genealógico | Fallec:{total_deaths} Nacim:{total_births}"
+        )
+    except Exception as e:
+        print("Simulación error:", e)
+    finally:
+        conn.closeConnection()
+
+    root.after(SIM_INTERVAL_MS, lambda: simulation_tick(root))
+
+
 def showFam2():
     fam2 = VistaPersonasFam1(2)
     fam2.grab_set()
@@ -135,8 +157,9 @@ def savePersonFam2(newPerson):
         messagebox.showerror("Error", "Debe llenar todos los campos", parent=newPerson)
     else:
         try:
+            deathDate = None if newPerson.txtDeathDate.get().strip() == "" else str(newPerson.txtDeathDate.get())
             per = Persona(personId = int(newPerson.txtId.get()), name=newPerson.txtName.get(), lastName1=newPerson.txtLastName.get(), 
-                        lastName2=newPerson.txtLastName2.get(), birthDate=str(newPerson.calBirthDate.get()), deathDate=str(newPerson.calDeathDate.get()),
+                        lastName2=newPerson.txtLastName2.get(), birthDate=str(newPerson.calBirthDate.get()), deathDate=deathDate,
                             gender=newPerson.cmbxGender.get(), province=newPerson.cmbxProvince.get(), civilState=newPerson.cmbxCivilState.get(), nucleo=int(newPerson.cmbxNucleo.get()))
             conn = DBConnection()
             conn.dataInsertFam2(per)
@@ -151,8 +174,9 @@ def savePerson(newPerson):
         messagebox.showerror("Error", "Debe llenar todos los campos")
     else:
         try:
+            deathDate = None if newPerson.txtDeathDate.get().strip() == "" else str(newPerson.txtDeathDate.get())
             per = Persona(personId = int(newPerson.txtId.get()), name=newPerson.txtName.get(), lastName1=newPerson.txtLastName.get(), 
-                        lastName2=newPerson.txtLastName2.get(), birthDate=str(newPerson.calBirthDate.get()), deathDate=str(newPerson.calDeathDate.get()),
+                        lastName2=newPerson.txtLastName2.get(), birthDate=str(newPerson.calBirthDate.get()), deathDate=deathDate,
                             gender=newPerson.cmbxGender.get(), province=newPerson.cmbxProvince.get(), civilState=newPerson.cmbxCivilState.get(), nucleo=int(newPerson.cmbxNucleo.get()))
             conn = DBConnection()
             conn.dataInsertFam1(per)
@@ -204,6 +228,8 @@ def mnuHandler():
 
 
 if __name__ == "__main__":
+    SIM_INTERVAL_MS = 10_000  # 10 segundos
     screen = PrincipalWindow()
     mnuHandler()
+    screen.after(SIM_INTERVAL_MS, lambda: simulation_tick(screen))
     mainloop()
