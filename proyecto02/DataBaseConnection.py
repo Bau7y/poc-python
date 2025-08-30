@@ -372,5 +372,251 @@ class DBConnection:
             births += 1
 
         return births
+    
+        # ----------- Cross unions (F1 <-> F2) -----------
+    def _table_exists(self, table_name: str) -> bool:
+        try:
+            for r in self.cursor.tables(tableType='TABLE'):
+                if r.table_name.lower() == table_name.lower():
+                    return True
+        except Exception:
+            pass
+        try:
+            self.cursor.execute(f"SELECT 1 FROM {table_name} WHERE 1=0")
+            _ = self.cursor.fetchone()
+            return True
+        except Exception:
+            return False
+
+    def _ensure_relaciones_cross(self):
+        if not self._table_exists("RelacionesCross"):
+            self.cursor.execute("""
+                CREATE TABLE RelacionesCross (
+                    IdPersonaA LONG,
+                    FamA BYTE,
+                    IdPersonaB LONG,
+                    FamB BYTE,
+                    FechaUnion DATETIME,
+                    TipoUnion TEXT(50)
+                )
+            """)
+            # índice único para evitar duplicados
+            try:
+                self.cursor.execute(
+                    "CREATE UNIQUE INDEX UX_RelCross ON RelacionesCross (IdPersonaA, FamA, IdPersonaB, FamB)"
+                )
+            except Exception:
+                pass
+            self.conn.commit()
+
+    def _is_in_union_any(self, person_id: int, fam: int) -> bool:
+        # Uniones internas
+        _, rel_table, _ = self._tables_by_family(fam)
+        self.cursor.execute(f"SELECT 1 FROM {rel_table} WHERE IdPadre=? OR IdMadre=?", (int(person_id), int(person_id)))
+        if self.cursor.fetchone():
+            return True
+        # Uniones cross (si existe)
+        if self._table_exists("RelacionesCross"):
+            self.cursor.execute(
+                "SELECT 1 FROM RelacionesCross WHERE (IdPersonaA=? AND FamA=?) OR (IdPersonaB=? AND FamB=?)",
+                (int(person_id), fam, int(person_id), fam)
+            )
+            if self.cursor.fetchone():
+                return True
+        return False
+
+    def _list_eligible_singles_cross(self, fam: int):
+        """
+        Devuelve objetos Persona de la familia 'fam' que estén vivos, solteros
+        y sin unión previa (ni interna ni cross).
+        """
+        person_table, _, _ = self._tables_by_family(fam)
+        self.cursor.execute(
+            f"""
+            SELECT ID, Nombre, Apellido, Apellido2, FechaNacimiento, FechaFallecimiento,
+                   Genero, Provincia, EstadoCivil, IdNucleo
+            FROM {person_table}
+            WHERE FechaFallecimiento IS NULL
+              AND (EstadoCivil IS NULL OR EstadoCivil LIKE 'Solt%')
+            """
+        )
+        rows = self.cursor.fetchall()
+        singles = []
+        for r in rows:
+            if not self._is_in_union_any(r[0], fam):
+                singles.append(
+                    Persona(
+                        personId=r[0], name=r[1], lastName1=r[2], lastName2=r[3],
+                        birthDate=r[4], deathDate=r[5], gender=r[6],
+                        province=r[7], civilState=r[8], nucleo=r[9]
+                    )
+                )
+        return singles
+
+    def auto_create_unions_cross(self, prob_attempt: float = 0.40, max_pairs: int = 3) -> int:
+        """
+        Crea hasta 'max_pairs' parejas entre familias (F1<->F2) según afinidad.
+        Marca FechaUnion y TipoUnion='Afinidad Cross'.
+        También actualiza EstadoCivil a 'Casado' (ajústalo si prefieres 'Unión libre').
+        """
+        self._ensure_relaciones_cross()
+        singles1 = self._list_eligible_singles_cross(1)
+        singles2 = self._list_eligible_singles_cross(2)
+        if not singles1 or not singles2:
+            return 0
+
+        random.shuffle(singles1)
+        random.shuffle(singles2)
+        created = 0
+
+        for a, b in zip(singles1, singles2):
+            if created >= max_pairs:
+                break
+            if random.random() > prob_attempt:
+                continue
+            # Reglas (edad, diferencia, compatibilidad, no hermanos dentro de su propia fam)
+            if not self._are_eligible_to_unite(a, b, 1):  # usa PH1 para evitar hermanos (cross no comparte PH)
+                continue
+
+            # Evitar duplicado cross (cualquier orden)
+            self.cursor.execute(
+                """SELECT 1 FROM RelacionesCross
+                   WHERE (IdPersonaA=? AND FamA=1 AND IdPersonaB=? AND FamB=2)
+                      OR (IdPersonaA=? AND FamA=2 AND IdPersonaB=? AND FamB=1)""",
+                (int(a.getId()), int(b.getId()), int(b.getId()), int(a.getId()))
+            )
+            if self.cursor.fetchone():
+                continue
+
+            # Insertar unión cross
+            self.cursor.execute(
+                "INSERT INTO RelacionesCross (IdPersonaA, FamA, IdPersonaB, FamB, FechaUnion, TipoUnion) VALUES (?, 1, ?, 2, ?, ?)",
+                (int(a.getId()), int(b.getId()), datetime.now(), "Afinidad Cross")
+            )
+            # Cambiar estado civil (opcional)
+            self.cursor.execute("UPDATE Personas SET EstadoCivil=? WHERE ID=?", ("Casado", int(a.getId())))
+            self.cursor.execute("UPDATE Personas2 SET EstadoCivil=? WHERE ID=?", ("Casado", int(b.getId())))
+            self.conn.commit()
+            created += 1
+
+        return created
+
+    def _assign_roles_cross(self, pa, pb):
+        """
+        Devuelve: (father_id, father_fam, mother_id, mother_fam)
+        Si no se puede detectar por género, usa un orden consistente.
+        """
+        g1 = (pa.getGender() or "").strip().lower()
+        g2 = (pb.getGender() or "").strip().lower()
+        if "masculino" in g1 and "femenino" in g2:
+            return pa.getId(), 1, pb.getId(), 2
+        if "femenino" in g1 and "masculino" in g2:
+            return pb.getId(), 2, pa.getId(), 1
+        # Sin claridad: decide por ID para tener estabilidad
+        if pa.getId() <= pb.getId():
+            return pa.getId(), 1, pb.getId(), 2
+        else:
+            return pb.getId(), 2, pa.getId(), 1
+
+    def list_cross_couples(self):
+        """
+        Devuelve lista de tuplas (idA, famA, idB, famB) de RelacionesCross
+        donde no estén fallecidos ambos.
+        """
+        if not self._table_exists("RelacionesCross"):
+            return []
+        couples = []
+        self.cursor.execute("SELECT IdPersonaA, FamA, IdPersonaB, FamB FROM RelacionesCross")
+        for (ida, fama, idb, famb) in self.cursor.fetchall():
+            # Vivos? (al menos uno)
+            pa = self.searchPerson(ida, fama)
+            pb = self.searchPerson(idb, famb)
+            if not pa or not pb:
+                continue
+            if (pa.getDeathDate() is None) or (pb.getDeathDate() is None):
+                couples.append((int(ida), int(fama), int(idb), int(famb)))
+        return couples
+
+    def tick_births_cross(self, prob_per_couple: float = 0.25) -> int:
+        """
+        Genera nacimientos para parejas CROSS:
+        - El bebé nace en la familia del padre (por convención).
+        - Se insertan dos vínculos en PadreHijo{fam_bebe}: (padre->hijo) y (madre->hijo).
+          (Nota: el ID de la madre es de la otra familia, pero nos sirve para inferir parentescos por ID único de cédula).
+        """
+        births = 0
+        couples = self.list_cross_couples()
+        if not couples:
+            return births
+
+        for (ida, fama, idb, famb) in couples:
+            pa = self.searchPerson(ida, fama)
+            pb = self.searchPerson(idb, famb)
+            if pa is None or pb is None:
+                continue
+            # Reglas de elegibilidad (usa fam del padre para chequeo básico de consanguinidad)
+            base_fam_for_rules = 1  # indiferente, solo necesita una PH para la verificación de hermanos
+            if not self._are_eligible_to_unite(pa, pb, base_fam_for_rules):
+                continue
+            if random.random() >= prob_per_couple:
+                continue
+
+            father_id, father_fam, mother_id, mother_fam = self._assign_roles_cross(pa, pb)
+            bebe_fam = father_fam  # convención: bebé nace en la familia del padre
+            person_table, _, ph_table = self._tables_by_family(bebe_fam)
+
+            # Generar datos del bebé
+            new_id = random.randint(10_000_000, 99_999_999)
+            self.cursor.execute(f"SELECT 1 FROM {person_table} WHERE ID=?", (int(new_id),))
+            if self.cursor.fetchone():
+                continue
+
+            nombres_m = ["Ana","María","Laura","Sofía","Lucía"]
+            nombres_h = ["Juan","Carlos","Pedro","José","Diego"]
+            genero = random.choice(["Masculino","Femenino"])
+            nombre = random.choice(nombres_h if genero.startswith("M") else nombres_m)
+            hoy = dt.date.today()
+
+            # Apellidos: 1° del padre, 2° de la madre (estilo CR)
+            if father_fam == 1:
+                padre = pa
+                madre = pb
+            else:
+                padre = pb
+                madre = pa
+
+            last1 = padre.getLastName1()
+            last2 = madre.getLastName2()
+
+            provincia = random.choice([pa.getProvince(), pb.getProvince()])
+            nucleo = padre.getNucleo()
+
+            bebe = Persona(
+                personId=new_id,
+                name=nombre,
+                lastName1=last1,
+                lastName2=last2,
+                birthDate=hoy,
+                deathDate=None,
+                gender=genero,
+                province=provincia,
+                civilState="Soltero",
+                nucleo=nucleo
+            )
+
+            # Inserta en la familia del bebé
+            if bebe_fam == 1:
+                self.dataInsertFam1(bebe)
+            else:
+                self.dataInsertFam2(bebe)
+
+            # Vincula en PH de la familia del bebé con ambos padres (IDs globales de cédula)
+            self.cursor.execute(f"INSERT INTO {ph_table} (IdPadre, IdHijo) VALUES (?, ?)", (int(father_id), int(new_id)))
+            self.cursor.execute(f"INSERT INTO {ph_table} (IdPadre, IdHijo) VALUES (?, ?)", (int(mother_id), int(new_id)))
+            self.conn.commit()
+            births += 1
+
+        return births
+
 
 conn = DBConnection()

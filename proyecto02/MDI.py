@@ -9,16 +9,26 @@ from tkinter import messagebox
 def simulation_tick(root):
     conn = DBConnection()
     try:
-        total_deaths = 0
-        total_births = 0
-        for fam in (1, 2):
-            conn.tick_birthdays(fam)
-            total_deaths += conn.tick_deaths(fam, prob=0.03)
-            total_births += conn.tick_births(fam, prob_per_couple=0.20)
+        total_deaths   = 0
+        total_births   = 0
+        unions_cross   = 0
+        births_cross   = 0
 
-        # usa winfo_toplevel() para subir hasta la ventana raíz
+        # 1) Crear parejas entre familias (cross) por afinidad
+        unions_cross += conn.auto_create_unions_cross(prob_attempt=0.50, max_pairs=4)
+
+        # 2) Fallecimientos y nacimientos internos (si existieran parejas internas)
+        for fam in (1, 2):
+            conn.tick_birthdays(fam)  # no persiste nada (edad al vuelo)
+            total_deaths += conn.tick_deaths(fam, prob=0.05)           # subido para pruebas
+            total_births += conn.tick_births(fam, prob_per_couple=0.30) # subido para pruebas
+
+        # 3) Nacimientos de parejas cross
+        births_cross += conn.tick_births_cross(prob_per_couple=0.35)
+
+        # Título (PrincipalWindow hereda de Tk, OK)
         root.winfo_toplevel().title(
-            f"Árbol genealógico | Fallec:{total_deaths} Nacim:{total_births}"
+            f"Árbol genealógico | Cross Unions:{unions_cross} Cross Births:{births_cross} | Fallec:{total_deaths} Births:{total_births}"
         )
     except Exception as e:
         print("Simulación error:", e)
