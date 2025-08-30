@@ -136,6 +136,37 @@ class DBConnection:
         today = ref_date or dt.date.today()
         return today.year - b.year - ((today.month, today.day) < (b.month, b.day))
     
+    def _searchPerson_any(self, pid: int):
+        """Devuelve (persona, fam) buscando en ambas familias, o (None, None)."""
+        p = self.searchPerson(pid, 1)
+        if p: return p, 1
+        p = self.searchPerson(pid, 2)
+        if p: return p, 2
+        return None, None
+    
+    def _is_alive(self, pid: int, fam: int) -> bool:
+        person_table, _, _ = self._tables_by_family(fam)
+        self.cursor.execute(f"SELECT FechaFallecimiento FROM {person_table} WHERE ID=?", (int(pid),))
+        r = self.cursor.fetchone()
+        return (r is not None) and (r[0] is None)
+    
+    def _log_event(self, pid: int, fam: int, tipo: str, detalle: str):
+        # Si no existe, no falla: intenta detectar tabla por metadata
+        try:
+            exists = False
+            for t in self.cursor.tables(tableType='TABLE'):
+                if t.table_name.lower() == "historialeventos":
+                    exists = True; break
+            if not exists: return
+            from datetime import datetime
+            self.cursor.execute(
+                "INSERT INTO HistorialEventos (IdPersona, Familia, Fecha, Tipo, Detalle) VALUES (?, ?, ?, ?, ?)",
+                (int(pid), fam, datetime.now(), tipo, detalle)
+            )
+            self.conn.commit()
+        except Exception:
+            pass
+    
 
     def insert_parent_child_PH(self, parent_id: int, child_id: int, fam: int) -> bool:
         _, _, ph_table = self._tables_by_family(fam)
@@ -205,10 +236,6 @@ class DBConnection:
 
     # ------- Fallecimientos aleatorios -------
     def tick_deaths(self, fam:int, prob:float=0.05):
-        """
-        Marca aleatoriamente fallecimientos con probabilidad 'prob' por persona viva.
-        Asigna FechaFallecimiento = hoy.
-        """
         person_table, _, _ = self._tables_by_family(fam)
 
         self.cursor.execute(f"SELECT ID, FechaFallecimiento FROM {person_table}")
@@ -220,15 +247,20 @@ class DBConnection:
             if fdef:  # ya fallecido
                 continue
             if random.random() < prob:
-                # marca fallecimiento
                 self.cursor.execute(
                     f"UPDATE {person_table} SET FechaFallecimiento=? WHERE ID=?",
                     (today, int(pid))
                 )
+                self.conn.commit()
                 deaths += 1
+                # Historial + efectos
+                self._log_event(int(pid), fam, "Fallecimiento", "Marcado por simulación")
+                try:
+                    self._handle_death_side_effects(int(pid), fam)
+                except Exception as e:
+                    # Si algo falla, no rompas la simulación
+                    print("Side-effects error:", e)
 
-        if deaths:
-            self.conn.commit()
         return deaths
 
     # ------- Nacimientos (hijos de parejas activas) -------
@@ -617,6 +649,181 @@ class DBConnection:
             births += 1
 
         return births
+    # ===================== EFECTOS COLATERALES =====================
+    # ---------- Viudez automática ----------
+    def _set_widow_internal(self, deceased_id: int, fam: int):
+        person_table, rel_table, _ = self._tables_by_family(fam)
+        # ¿Era padre/madre en una relación interna?
+        self.cursor.execute(
+            f"SELECT IdPadre, IdMadre FROM {rel_table} WHERE IdPadre=? OR IdMadre=?",
+            (int(deceased_id), int(deceased_id))
+        )
+        rows = self.cursor.fetchall()
+        spouses = set()
+        for (p, m) in rows:
+            if p == deceased_id: spouses.add(m)
+            if m == deceased_id: spouses.add(p)
+        for sp in spouses:
+            # Solo si el/la cónyuge está vivo(a)
+            if self._is_alive(sp, fam):
+                self.cursor.execute(f"UPDATE {person_table} SET EstadoCivil=? WHERE ID=?", ("Viudo", int(sp)))
+                self.conn.commit()
+                self._log_event(sp, fam, "Viudez", f"Quedó viudo(a) por fallecimiento de {deceased_id}")
+
+    def _table_exists(self, name: str) -> bool:
+        try:
+            for r in self.cursor.tables(tableType='TABLE'):
+                if r.table_name.lower() == name.lower(): return True
+        except Exception:
+            pass
+        try:
+            self.cursor.execute(f"SELECT 1 FROM {name} WHERE 1=0")
+            _ = self.cursor.fetchone()
+            return True
+        except Exception:
+            return False
+
+    def _set_widow_cross(self, deceased_id: int, fam: int):
+        if not self._table_exists("RelacionesCross"): return
+        other_id, other_fam = None, None
+        # ¿A era IdPersonaA?
+        self.cursor.execute(
+            "SELECT IdPersonaB, FamB FROM RelacionesCross WHERE IdPersonaA=? AND FamA=?",
+            (int(deceased_id), fam)
+        )
+        r = self.cursor.fetchone()
+        if r: other_id, other_fam = int(r[0]), int(r[1])
+        else:
+            self.cursor.execute(
+                "SELECT IdPersonaA, FamA FROM RelacionesCross WHERE IdPersonaB=? AND FamB=?",
+                (int(deceased_id), fam)
+            )
+            r = self.cursor.fetchone()
+            if r: other_id, other_fam = int(r[0]), int(r[1])
+
+        if other_id and other_fam and self._is_alive(other_id, other_fam):
+            person_table, _, _ = self._tables_by_family(other_fam)
+            self.cursor.execute(f"UPDATE {person_table} SET EstadoCivil=? WHERE ID=?", ("Viudo", int(other_id)))
+            self.conn.commit()
+            self._log_event(other_id, other_fam, "Viudez", f"Quedó viudo(a) por fallecimiento de {deceased_id} (cross)")
+
+    # ---------- Tutor legal para huérfanos ----------
+    def _parents_of(self, child_id: int, fam_child: int):
+        """Devuelve lista de tuplas (parent_id, fam_parent) a partir del PH de la familia del menor."""
+        _, _, ph_table = self._tables_by_family(fam_child)
+        self.cursor.execute(f"SELECT IdPadre FROM {ph_table} WHERE IdHijo=?", (int(child_id),))
+        parents = []
+        for (pid,) in self.cursor.fetchall():
+            p, f = self._searchPerson_any(int(pid))
+            if p: parents.append((int(pid), int(f)))
+        return parents  # puede venir 0,1,2 según datos
+
+    def _children_of(self, parent_id: int, fam_of_ph: int):
+        """Hijos de un padre/madre usando PH de la familia 'fam_of_ph'."""
+        _, _, ph_table = self._tables_by_family(fam_of_ph)
+        self.cursor.execute(f"SELECT IdHijo FROM {ph_table} WHERE IdPadre=?", (int(parent_id),))
+        return [int(r[0]) for r in self.cursor.fetchall()]
+
+    def _siblings_in_same_family(self, child_id: int, fam_child: int):
+        """Hermanos del menor (mismo padre y/o madre) dentro de la MISMA familia del menor."""
+        sibs = set()
+        # Padres del menor (con su familia real)
+        parents = self._parents_of(child_id, fam_child)
+        if not parents: return []
+        # Para cada padre, busca hijos en el PH de la familia del menor (ahí quedó el vínculo al nacer)
+        _, _, ph_table = self._tables_by_family(fam_child)
+        for (pid, _) in parents:
+            self.cursor.execute(f"SELECT IdHijo FROM {ph_table} WHERE IdPadre=?", (int(pid),))
+            for (hid,) in self.cursor.fetchall():
+                if int(hid) != int(child_id):
+                    sibs.add(int(hid))
+        return list(sibs)
+
+    def _grandparents(self, parent_id: int, fam_parent: int):
+        """Devuelve IDs de abuelos de 'parent_id' buscando en PH de la familia del propio padre/madre."""
+        _, _, ph_table = self._tables_by_family(fam_parent)
+        self.cursor.execute(f"SELECT IdPadre FROM {ph_table} WHERE IdHijo=?", (int(parent_id),))
+        return [int(r[0]) for r in self.cursor.fetchall()]
+
+    def _choose_tutor(self, child_id: int, fam_child: int):
+        """Estrategia: 1) Hermano mayor (>=18) vivo en la misma familia; 2) Abuelo(a) vivo(a) más longevo(a)."""
+        # 1) Hermanos
+        sibs = self._siblings_in_same_family(child_id, fam_child)
+        candidates = []
+        for sid in sibs:
+            sp, _ = self._searchPerson_any(sid)
+            if not sp: continue
+            if self._is_alive(sid, fam_child):
+                age = self._calc_age_from_birth(sp.getBirthDate())
+                if age is not None and age >= 18:
+                    candidates.append((sid, fam_child, age))
+        if candidates:
+            # el mayor
+            candidates.sort(key=lambda x: x[2], reverse=True)
+            return candidates[0][0], candidates[0][1]
+
+        # 2) Abuelos
+        parents = self._parents_of(child_id, fam_child)
+        gp_candidates = []
+        for (pid, pfam) in parents:
+            for gid in self._grandparents(pid, pfam):
+                # el abuelo puede pertenecer a fam del propio padre/madre
+                if self._is_alive(gid, pfam):
+                    gp, _ = self._searchPerson_any(gid)
+                    age = self._calc_age_from_birth(gp.getBirthDate()) if gp else None
+                    if age is not None and age >= 18:
+                        gp_candidates.append((gid, pfam, age))
+        if gp_candidates:
+            gp_candidates.sort(key=lambda x: x[2], reverse=True)
+            return gp_candidates[0][0], gp_candidates[0][1]
+
+        return None, None  # sin tutor válido
+
+    def _ensure_tutor_if_orphan(self, child_id: int, fam_child: int):
+        """Si ambos padres han fallecido (o no existen), asigna tutor y registra evento."""
+        parents = self._parents_of(child_id, fam_child)
+        if len(parents) < 2:
+            return  # requiere dos progenitores para considerar orfandad “plena”
+        all_dead = True
+        for (pid, pfam) in parents:
+            if self._is_alive(pid, pfam):
+                all_dead = False; break
+        if not all_dead:
+            return
+
+        tutor_id, tutor_fam = self._choose_tutor(child_id, fam_child)
+        if tutor_id and tutor_fam:
+            # Registrar en Tutorias (si existe)
+            try:
+                if self._table_exists("Tutorias"):
+                    from datetime import datetime
+                    self.cursor.execute(
+                        "INSERT INTO Tutorias (IdMenor, FamMenor, IdTutor, FamTutor, Fecha, Motivo) VALUES (?, ?, ?, ?, ?, ?)",
+                        (int(child_id), fam_child, int(tutor_id), tutor_fam, datetime.now(), "AmbosPadresFallecidos")
+                    )
+                    self.conn.commit()
+                self._log_event(child_id, fam_child, "TutorAsignado", f"Tutor {tutor_id} (Fam {tutor_fam}) por orfandad")
+            except Exception:
+                pass
+        else:
+            self._log_event(child_id, fam_child, "TutorPendiente", "No se encontró tutor disponible")
+
+    # ---------- Efectos al fallecer alguien ----------
+    def _handle_death_side_effects(self, deceased_id: int, fam: int):
+        # 1) Viudez
+        self._set_widow_internal(deceased_id, fam)
+        self._set_widow_cross(deceased_id, fam)
+
+        # 2) Tutoría para hijos huérfanos
+        # Hijos en PH de ambas familias, porque pudo ser padre/madre de niños en fam 1 o 2 (por nacimientos cross)
+        for fam_ph in (1, 2):
+            _, _, ph_table = self._tables_by_family(fam_ph)
+            self.cursor.execute(f"SELECT IdHijo FROM {ph_table} WHERE IdPadre=?", (int(deceased_id),))
+            for (hid,) in self.cursor.fetchall():
+                # El hijo 'hid' vive (pertenece) a 'fam_ph'; verificar orfandad y asignar tutor
+                self._ensure_tutor_if_orphan(int(hid), fam_ph)
+
+        
 
 
 conn = DBConnection()
