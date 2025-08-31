@@ -87,6 +87,7 @@ class DBConnection:
         else:
             return None
         
+    #----------Utilidades
     def _tables_by_family(self, fam: int):
         if fam == 1:
             return ("Personas", "RelacionesFam1", "PadreHijo1")
@@ -104,27 +105,18 @@ class DBConnection:
     
     
     def _to_date(self, d):
-        """
-        Convierte un valor proveniente de Access a date() de Python si es posible.
-        Acepta objetos date/datetime o strings en formatos comunes.
-        """
-        if d is None or d == "":
-            return None
-        if isinstance(d, dt.date):
-            return d
-        if isinstance(d, dt.datetime):
+        if d is None: return None
+        if isinstance(d, dt.datetime): 
             return d.date()
+        if isinstance(d, dt.date): 
+            return d
         s = str(d).strip()
         for fmt in ("%d/%m/%Y", "%Y-%m-%d", "%m/%d/%Y"):
-            try:
+            try: 
                 return dt.datetime.strptime(s, fmt).date()
-            except Exception:
+            except: 
                 pass
-        # Último intento si Access entrega tipo COM raro:
-        try:
-            return d.date()
-        except Exception:
-            return None
+        return None
 
     def _calc_age_from_birth(self, birth_date, ref_date=None):
         """
@@ -166,6 +158,22 @@ class DBConnection:
             self.conn.commit()
         except Exception:
             pass
+
+    def _person_exists(self, pid:int, fam:int) -> bool:
+        person_table, _, _ = self._tables_by_family(fam)
+        self.cursor.execute(f"SELECT 1 FROM {person_table} WHERE ID=?", (int(pid),))
+        return self.cursor.fetchone() is not None
+    
+
+    def _parents_of_child(self, child_id:int, fam_child:int):
+        """Devuelve lista de (parent_id, fam_parent). Usa PH de la familia del hijo."""
+        _, _, ph_table = self._tables_by_family(fam_child)
+        self.cursor.execute(f"SELECT IdPadre FROM {ph_table} WHERE IdHijo=?", (int(child_id),))
+        out = []
+        for (pid,) in self.cursor.fetchall():
+            p, f = self._searchPerson_any(int(pid))  # ya lo tienes en Punto 3
+            if p: out.append((int(pid), int(f)))
+        return out
     
 
     def insert_parent_child_PH(self, parent_id: int, child_id: int, fam: int) -> bool:
@@ -338,72 +346,7 @@ class DBConnection:
         return True
 
     def tick_births(self, fam:int, prob_per_couple:float=0.15):
-        """
-        Con probabilidad por pareja, genera un hijo:
-        - ID autogenerado (elige un aleatorio que no choque).
-        - Nombre autogenerado, sexo aleatorio.
-        - Nucleo: hereda el de la pareja (del padre).
-        - Provincia: de uno de los padres.
-        """
-        person_table, _, ph_table = self._tables_by_family(fam)
-        couples = self.list_couples(fam)
-        births = 0
-
-        for (padre_id, madre_id) in couples:
-            # Carga objetos Persona (ya tienes searchPerson)
-            pa = self.searchPerson(padre_id, fam)
-            ma = self.searchPerson(madre_id, fam)
-            if pa is None or ma is None:
-                continue
-
-            # Elegibles para "unirse" (regla del proyecto)
-            if not self._are_eligible_to_unite(pa, ma, fam):
-                continue
-
-            if random.random() >= prob_per_couple:
-                continue
-
-            # Construir persona bebé
-            new_id = random.randint(10_000_000, 99_999_999)
-            # Verifica que no exista
-            self.cursor.execute(f"SELECT 1 FROM {person_table} WHERE ID=?", (int(new_id),))
-            if self.cursor.fetchone():
-                continue  # intenta luego, evita colisión
-
-            nombres_m = ["Ana","María","Laura","Sofía","Lucía"]
-            nombres_h = ["Juan","Carlos","Pedro","José","Diego"]
-            genero = random.choice(["Masculino","Femenino"])
-            nombre = random.choice(nombres_h if genero.startswith("M") else nombres_m)
-
-            hoy = dt.date.today()
-            provincia = random.choice([pa.getProvince(), ma.getProvince()])
-            nucleo = pa.getNucleo()  # o decide otra lógica
-
-            bebe = Persona(
-                personId=new_id,
-                name=nombre,
-                lastName1=pa.getLastName1(),
-                lastName2=ma.getLastName2(),
-                birthDate=hoy,  # actual
-                deathDate=None,
-                gender=genero,
-                province=provincia,
-                civilState="Soltero",
-                nucleo=nucleo
-            )
-            # Inserta en Personas{fam}
-            if fam == 1:
-                self.dataInsertFam1(bebe)
-            else:
-                self.dataInsertFam2(bebe)
-
-            # Inserta vínculo en PadreHijo{fam} con ambos padres
-            self.cursor.execute(f"INSERT INTO {ph_table} (IdPadre, IdHijo) VALUES (?, ?)", (int(padre_id), int(new_id)))
-            self.cursor.execute(f"INSERT INTO {ph_table} (IdPadre, IdHijo) VALUES (?, ?)", (int(madre_id), int(new_id)))
-            self.conn.commit()
-            births += 1
-
-        return births
+        return 0
     
         # ----------- Cross unions (F1 <-> F2) -----------
     def _table_exists(self, table_name: str) -> bool:
@@ -488,8 +431,7 @@ class DBConnection:
     def auto_create_unions_cross(self, prob_attempt: float = 0.40, max_pairs: int = 3) -> int:
         """
         Crea hasta 'max_pairs' parejas entre familias (F1<->F2) según afinidad.
-        Marca FechaUnion y TipoUnion='Afinidad Cross'.
-        También actualiza EstadoCivil a 'Casado' (ajústalo si prefieres 'Unión libre').
+        Marca FechaUnion y TipoUnion='Afinidad Cross' y cambia EstadoCivil a 'Casado'.
         """
         self._ensure_relaciones_cross()
         singles1 = self._list_eligible_singles_cross(1)
@@ -506,15 +448,16 @@ class DBConnection:
                 break
             if random.random() > prob_attempt:
                 continue
-            # Reglas (edad, diferencia, compatibilidad, no hermanos dentro de su propia fam)
-            if not self._are_eligible_to_unite(a, b, 1):  # usa PH1 para evitar hermanos (cross no comparte PH)
+
+            # Reglas (edad, diferencia, compatibilidad, no hermanos intra-familia)
+            if not self._are_eligible_to_unite(a, b, 1):  # usa PH1 para chequear hermanos
                 continue
 
             # Evitar duplicado cross (cualquier orden)
             self.cursor.execute(
                 """SELECT 1 FROM RelacionesCross
-                   WHERE (IdPersonaA=? AND FamA=1 AND IdPersonaB=? AND FamB=2)
-                      OR (IdPersonaA=? AND FamA=2 AND IdPersonaB=? AND FamB=1)""",
+                WHERE (IdPersonaA=? AND FamA=1 AND IdPersonaB=? AND FamB=2)
+                    OR (IdPersonaA=? AND FamA=2 AND IdPersonaB=? AND FamB=1)""",
                 (int(a.getId()), int(b.getId()), int(b.getId()), int(a.getId()))
             )
             if self.cursor.fetchone():
@@ -525,8 +468,8 @@ class DBConnection:
                 "INSERT INTO RelacionesCross (IdPersonaA, FamA, IdPersonaB, FamB, FechaUnion, TipoUnion) VALUES (?, 1, ?, 2, ?, ?)",
                 (int(a.getId()), int(b.getId()), datetime.now(), "Afinidad Cross")
             )
-            # Cambiar estado civil (opcional)
-            self.cursor.execute("UPDATE Personas SET EstadoCivil=? WHERE ID=?", ("Casado", int(a.getId())))
+            # Cambiar estado civil (opcional pero útil)
+            self.cursor.execute("UPDATE Personas  SET EstadoCivil=? WHERE ID=?", ("Casado", int(a.getId())))
             self.cursor.execute("UPDATE Personas2 SET EstadoCivil=? WHERE ID=?", ("Casado", int(b.getId())))
             self.conn.commit()
             created += 1
@@ -670,18 +613,6 @@ class DBConnection:
                 self.conn.commit()
                 self._log_event(sp, fam, "Viudez", f"Quedó viudo(a) por fallecimiento de {deceased_id}")
 
-    def _table_exists(self, name: str) -> bool:
-        try:
-            for r in self.cursor.tables(tableType='TABLE'):
-                if r.table_name.lower() == name.lower(): return True
-        except Exception:
-            pass
-        try:
-            self.cursor.execute(f"SELECT 1 FROM {name} WHERE 1=0")
-            _ = self.cursor.fetchone()
-            return True
-        except Exception:
-            return False
 
     def _set_widow_cross(self, deceased_id: int, fam: int):
         if not self._table_exists("RelacionesCross"): return
@@ -822,6 +753,211 @@ class DBConnection:
             for (hid,) in self.cursor.fetchall():
                 # El hijo 'hid' vive (pertenece) a 'fam_ph'; verificar orfandad y asignar tutor
                 self._ensure_tutor_if_orphan(int(hid), fam_ph)
+
+
+    # ================== CONSULTAS (NUEVAS) ==================
+
+    def _spouses_of(self, pid:int, fam:int):
+        """(NUEVO) Cónyuges del pid: internos y cross."""
+        spouses = []
+        _, rel_table, _ = self._tables_by_family(fam)
+        # internas
+        self.cursor.execute(f"SELECT IdPadre, IdMadre FROM {rel_table} WHERE IdPadre=? OR IdMadre=?", (int(pid), int(pid)))
+        for (p,m) in self.cursor.fetchall():
+            if p == pid: spouses.append((int(m), fam, "interna"))
+            if m == pid: spouses.append((int(p), fam, "interna"))
+        # cross
+        if self._table_exists("RelacionesCross"):
+            self.cursor.execute("SELECT IdPersonaB, FamB FROM RelacionesCross WHERE IdPersonaA=? AND FamA=?", (int(pid), fam))
+            spouses += [(int(sid), int(sf), "cross") for (sid, sf) in self.cursor.fetchall()]
+            self.cursor.execute("SELECT IdPersonaA, FamA FROM RelacionesCross WHERE IdPersonaB=? AND FamB=?", (int(pid), fam))
+            spouses += [(int(sid), int(sf), "cross") for (sid, sf) in self.cursor.fetchall()]
+        return spouses
+
+    def _gender_of(self, pid:int, fam:int):
+        """(NUEVO) Género en minúsculas para clasificación materna/paterna."""
+        person_table, _, _ = self._tables_by_family(fam)
+        self.cursor.execute(f"SELECT Genero FROM {person_table} WHERE ID=?", (int(pid),))
+        r = self.cursor.fetchone()
+        return (r[0] or "").strip().lower() if r else ""
+
+    def find_relationship(self, a_id:int, a_fam:int, b_id:int, b_fam:int):
+        """(NUEVO) Relación A↔B por BFS sobre aristas: parent/child y spouse."""
+        from collections import deque
+
+        if a_id == b_id and a_fam == b_fam:
+            return ("Es la misma persona.", [(a_id, a_fam)])
+
+        def neighbors(node):
+            pid, fam = node
+            neigh = []
+            # padres del nodo
+            for (ppid, pfam) in self._parents_of(pid, fam):
+                neigh.append(((ppid, pfam), "parent"))
+            # hijos del nodo (pueden vivir en F1 o F2)
+            for fam_ph in (1,2):
+                for hid in self._children_of(pid, fam_ph):
+                    neigh.append(((hid, fam_ph), "child"))
+            # cónyuges
+            for (sid, sfam, _) in self._spouses_of(pid, fam):
+                neigh.append(((sid, sfam), "spouse"))
+            return neigh
+
+        start, goal = (a_id, a_fam), (b_id, b_fam)
+        q = deque([start])
+        prev = { start: (None, None) }
+        seen = { start }
+        found = False
+
+        while q:
+            u = q.popleft()
+            if u == goal:
+                found = True; break
+            for (v, edge) in neighbors(u):
+                if v not in seen:
+                    seen.add(v); prev[v] = (u, edge); q.append(v)
+        if not found:
+            return ("Sin relación detectable (en los datos actuales).", [])
+
+        # reconstruir ruta
+        path, edges = [], []
+        cur = goal
+        while cur is not None:
+            path.append(cur)
+            pr, ed = prev[cur]
+            if ed: edges.append(ed)
+            cur = pr
+        path.reverse(); edges = list(reversed(edges))
+
+        # clasificación básica por patrones cortos
+        if edges == ["parent"]: return ("Padre/Madre", path)
+        if edges == ["child"]:  return ("Hijo/Hija", path)
+        if edges == ["spouse"]: return ("Cónyuges", path)
+        if len(edges) == 2 and set(edges) == {"parent","child"}: return ("Hermanos/as", path)
+        if edges == ["parent","parent"]: return ("Abuelo/a", path)
+        if edges == ["child","child"]:   return ("Nieto/a", path)
+        if len(edges) == 3 and edges.count("parent")+edges.count("child") == 3:
+            return ("Tío/Tía o Sobrino/a", path)
+        if len(edges) == 4 and edges.count("parent")+edges.count("child") == 4:
+            return ("Primos/as de primer grado", path)
+        if "spouse" in edges and (edges.count("parent")+edges.count("child"))>=1:
+            return ("Parentesco por afinidad (político)", path)
+        return (f"Pariente a distancia {len(edges)} (ruta mínima)", path)
+
+    def list_first_cousins(self, pid:int, fam:int):
+        """(NUEVO) Primos de 1er grado de X."""
+        primos = set()
+        parents = self._parents_of(pid, fam)
+        for (ppid, pfam) in parents:
+            # abuelos de ese padre/madre
+            for (gpid, gpfam) in self._parents_of(ppid, pfam):
+                # hijos del abuelo = tíos (incluye al propio padre)
+                for fam_ph in (1,2):
+                    for unc in self._children_of(gpid, fam_ph):
+                        if unc == ppid:  # saltar al padre/madre
+                            continue
+                        for cuz in self._children_of(unc, fam_ph):
+                            primos.add((cuz, fam_ph))
+        return sorted(list(primos))
+
+    def list_maternal_ancestors(self, pid:int, fam:int, max_depth:10):
+        """(NUEVO) Línea materna de X (hasta max_depth)."""
+        out = []
+        cur_id, cur_fam = pid, fam
+        for _ in range(max_depth):
+            parents = self._parents_of(cur_id, cur_fam)
+            if not parents: break
+            mother = None
+            for (ppid, pfam) in parents:
+                if "femen" in self._gender_of(ppid, pfam):
+                    mother = (ppid, pfam); break
+            if not mother: mother = parents[0]
+            out.append(mother)
+            cur_id, cur_fam = mother
+        return out
+
+    def list_living_descendants(self, pid:int):
+        """(NUEVO) Descendientes vivos de X (todas las generaciones)."""
+        vivos, seen = set(), set([pid])
+        stack = [(pid, 1), (pid, 2)]  # explora hijos en PH1 y PH2
+        while stack:
+            cur, fam_ph = stack.pop()
+            for hid in self._children_of(cur, fam_ph):
+                if (hid, fam_ph) in seen: 
+                    continue
+                seen.add((hid, fam_ph))
+                if self._is_alive(hid, fam_ph):
+                    vivos.add((hid, fam_ph))
+                # sigue recursivo
+                stack.append((hid, fam_ph))
+        return sorted(list(vivos))
+
+    def list_recent_births(self, years:int=10):
+        """(NUEVO) Nacidos en los últimos N años (ambas familias)."""
+        today = dt.date.today()
+        cutoff = today.replace(year=today.year - years)
+        out = []
+        for fam in (1,2):
+            person_table, _, _ = self._tables_by_family(fam)
+            self.cursor.execute(f"SELECT ID, FechaNacimiento FROM {person_table}")
+            for (pid, fnac) in self.cursor.fetchall():
+                d = self._to_date(fnac)
+                if isinstance(d, dt.datetime):   # 🔧 forzar a date si aún quedara datetime
+                    d = d.date()
+                if d and d >= cutoff:
+                    out.append((int(pid), fam, d))
+        out.sort(key=lambda x: x[2], reverse=True)
+        return out
+
+    def list_couples_with_children(self, min_children:int=2):
+        """(NUEVO) Parejas con ≥N hijos (internas + cross)."""
+        result = []
+        # internas
+        for fam in (1,2):
+            _, rel_table, ph_table = self._tables_by_family(fam)
+            self.cursor.execute(f"SELECT IdPadre, IdMadre FROM {rel_table}")
+            for (p, m) in self.cursor.fetchall():
+                self.cursor.execute(f"SELECT IdHijo FROM {ph_table} WHERE IdPadre=?", (int(p),))
+                children = [int(r[0]) for r in self.cursor.fetchall()]
+                cnt = 0
+                for hid in children:
+                    self.cursor.execute(f"SELECT 1 FROM {ph_table} WHERE IdPadre=? AND IdHijo=?", (int(m), int(hid)))
+                    if self.cursor.fetchone(): cnt += 1
+                if cnt >= min_children:
+                    result.append(((int(p), fam), (int(m), fam), cnt))
+        # cross
+        if self._table_exists("RelacionesCross"):
+            self.cursor.execute("SELECT IdPersonaA, FamA, IdPersonaB, FamB FROM RelacionesCross")
+            for (ida, fama, idb, famb) in self.cursor.fetchall():
+                pa = self.searchPerson(int(ida), int(fama))
+                pb = self.searchPerson(int(idb), int(famb))
+                if not pa or not pb: continue
+                father_id, father_fam, mother_id, mother_fam = self._assign_roles_cross(pa, pb)
+                _, _, ph_table = self._tables_by_family(father_fam)
+                self.cursor.execute(f"SELECT IdHijo FROM {ph_table} WHERE IdPadre=?", (int(father_id),))
+                children = [int(r[0]) for r in self.cursor.fetchall()]
+                cnt = 0
+                for hid in children:
+                    self.cursor.execute(f"SELECT 1 FROM {ph_table} WHERE IdPadre=? AND IdHijo=?", (int(mother_id), int(hid)))
+                    if self.cursor.fetchone(): cnt += 1
+                if cnt >= min_children:
+                    result.append(((int(father_id), father_fam), (int(mother_id), mother_fam), cnt))
+        return sorted(result, key=lambda x: x[2], reverse=True)
+
+    def list_died_before_age(self, max_age:int=50):
+        """(NUEVO) Fallecidos con edad < max_age."""
+        out = []
+        for fam in (1,2):
+            person_table, _, _ = self._tables_by_family(fam)
+            self.cursor.execute(f"SELECT ID, FechaNacimiento, FechaFallecimiento FROM {person_table} WHERE FechaFallecimiento IS NOT NULL")
+            for (pid, fnac, fdef) in self.cursor.fetchall():
+                b = self._to_date(fnac); d = self._to_date(fdef)
+                if b and d:
+                    age = d.year - b.year - ((d.month, d.day) < (b.month, b.day))
+                    if age < max_age:
+                        out.append((int(pid), fam, age, d))
+        out.sort(key=lambda x: (x[2], x[3]))
+        return out
 
         
 

@@ -9,32 +9,22 @@ from tkinter import messagebox
 def simulation_tick(root):
     conn = DBConnection()
     try:
-        total_deaths   = 0
-        total_births   = 0
-        unions_cross   = 0
-        births_cross   = 0
+        unions_cross = conn.auto_create_unions_cross(prob_attempt=0.50, max_pairs=4)
 
-        # 1) Crear parejas entre familias (cross) por afinidad
-        unions_cross += conn.auto_create_unions_cross(prob_attempt=0.50, max_pairs=4)
-
-        # 2) Fallecimientos y nacimientos internos (si existieran parejas internas)
+        total_deaths = 0
         for fam in (1, 2):
-            conn.tick_birthdays(fam)  # no persiste nada (edad al vuelo)
-            total_deaths += conn.tick_deaths(fam, prob=0.05)           # subido para pruebas
-            total_births += conn.tick_births(fam, prob_per_couple=0.30) # subido para pruebas
+            conn.tick_birthdays(fam)                 # no persiste edad
+            total_deaths += conn.tick_deaths(fam, prob=0.05)
 
-        # 3) Nacimientos de parejas cross
-        births_cross += conn.tick_births_cross(prob_per_couple=0.35)
+        births_cross = conn.tick_births_cross(prob_per_couple=0.35)
 
-        # Título (PrincipalWindow hereda de Tk, OK)
         root.winfo_toplevel().title(
-            f"Árbol genealógico | Cross Unions:{unions_cross} Cross Births:{births_cross} | Fallec:{total_deaths} Births:{total_births}"
+            f"Árbol genealógico | Cross Unions:{unions_cross}  Cross Births:{births_cross}  Fallec:{total_deaths}"
         )
     except Exception as e:
         print("Simulación error:", e)
     finally:
         conn.closeConnection()
-
     root.after(SIM_INTERVAL_MS, lambda: simulation_tick(root))
 
 
@@ -71,25 +61,6 @@ def insertParentChild(fam: int, win):
         else:
             messagebox.showinfo("Éxito", "Relación padre/hijo registrada.", parent=win)
 
-        # Busca si este hijo ya tenía otro progenitor
-        other_parent_id = conn.get_other_parent_for_child(child_id, parent_id, fam)
-        if other_parent_id:
-            try:
-                made_union = conn.ensure_union_if_shared_child(parent_id, other_parent_id, fam)
-                if made_union:
-                    messagebox.showinfo(
-                        "Éxito",
-                        f"Se registró la pareja automáticamente (comparten hijo): {parent_id} y {other_parent_id}",
-                        parent=win
-                    )
-            except Exception as e:
-                messagebox.showwarning(
-                    "Atención",
-                    "Padre/hijo guardado. No se pudo crear la unión automática.\n"
-                    "Revisa nombres/columnas de RelacionesFam{fam}.\n\n"
-                    f"Detalle: {e}",
-                    parent=win
-                )
 
         win.destroy()
 
@@ -127,25 +98,118 @@ def personFound(newSearch, fam):
         messagebox.showerror("Error", "Debe ingresar un ID válido", parent=newSearch)
 
 
+# ================== HANDLERS DE CONSULTA (NUEVOS) ==================
+def _ask_two_ids_and_run(newSearch, fam, action):
+    try:
+        a = int(newSearch.txtReqId.get().strip())
+        b = int(newSearch.txtReqId2.get().strip())
+    except:
+        messagebox.showerror("Error", "Ingrese dos cédulas válidas.", parent=newSearch); return
+    conn = DBConnection()
+    try:
+        desc, path = conn.find_relationship(a, fam, b, fam)  # misma familia seleccionada
+        if not path:
+            messagebox.showinfo("Relación", desc, parent=newSearch); return
+        ruta = " → ".join([f"{pid}(F{ff})" for (pid, ff) in path])
+        messagebox.showinfo("Relación", f"{desc}\nRuta mínima: {ruta}", parent=newSearch)
+    finally:
+        conn.closeConnection()
+
+def _ask_one_id_and_list(newSearch, fam, fn, title):
+    try:
+        x = int(newSearch.txtReqId.get().strip())
+    except:
+        messagebox.showerror("Error", "Ingrese una cédula válida.", parent=newSearch); return
+    conn = DBConnection()
+    try:
+        rows = fn(conn, x, fam)
+        if not rows:
+            messagebox.showinfo(title, "Sin resultados.", parent=newSearch); return
+        if title == "Línea materna":
+            txt = " → ".join([f"{pid}(F{ff})" for (pid, ff) in rows])
+        else:
+            txt = "\n".join([f"{pid}(F{ff})" for (pid, ff) in rows]) if isinstance(rows[0], tuple) else "\n".join(map(str, rows))
+        messagebox.showinfo(title, txt, parent=newSearch)
+    finally:
+        conn.closeConnection()
+
+def _list_recent_births_ui(parent):
+    conn = DBConnection()
+    try:
+        rows = conn.list_recent_births(10)
+        if not rows:
+            messagebox.showinfo("Nacidos últimos 10 años", "No hay registros.", parent=parent); return
+        txt = "\n".join([f"{pid}(F{fam}) - {fec}" for (pid, fam, fec) in rows[:50]])
+        messagebox.showinfo("Nacidos últimos 10 años", txt, parent=parent)
+    finally:
+        conn.closeConnection()
+
+def _list_couples_2_children_ui(parent):
+    conn = DBConnection()
+    try:
+        rows = conn.list_couples_with_children(2)
+        if not rows:
+            messagebox.showinfo("Parejas con ≥2 hijos", "No hay parejas.", parent=parent); return
+        txt = "\n".join([f"P:{p[0]}(F{p[1]}) - M:{m[0]}(F{m[1]})  Hijos:{cnt}" for ((p),(m),cnt) in rows])
+        messagebox.showinfo("Parejas con ≥2 hijos", txt, parent=parent)
+    finally:
+        conn.closeConnection()
+
+def _list_died_before_50_ui(parent):
+    conn = DBConnection()
+    try:
+        rows = conn.list_died_before_age(50)
+        if not rows:
+            messagebox.showinfo("Fallecidos < 50", "No hay registros.", parent=parent); return
+        txt = "\n".join([f"{pid}(F{fam}) - Edad:{edad} - Fecha:{fec}" for (pid, fam, edad, fec) in rows[:50]])
+        messagebox.showinfo("Fallecidos antes de 50", txt, parent=parent)
+    finally:
+        conn.closeConnection()
+
+
 def questionHandler(newSearch, fam):
-    if newSearch.cmbxOptions.get() == "¿Cuál es la relación entre persona A y persona B?":
+    selection = newSearch.cmbxOptions.get()
+    if selection == "¿Cuál es la relación entre persona A y persona B?":
         newSearch.lblReqId.place(x=50, y=200)
         newSearch.txtReqId.place(x=50, y=250)
         newSearch.txtReqId2.place(x=50, y=300)
         newSearch.btnSearch.place(x=50, y=350)
-        newSearch.btnSearch.configure(command=lambda: personFound(newSearch, fam))
-    elif newSearch.cmbxOptions.get() == "¿Quiénes son los primos de primer grado de X?":
-        messagebox.showinfo("Respuesta", "Los primos de primer grado de X son: ...", parent=newSearch)
-    elif newSearch.cmbxOptions.get() == "¿Cuáles son todos los antepasados maternos de X?":
-        messagebox.showinfo("Respuesta", "Los antepasados maternos de X son: ...", parent=newSearch)
-    elif newSearch.cmbxOptions.get() == "¿Cuáles descendientes de X están vivos actualmente?":
-        messagebox.showinfo("Respuesta", "Los descendientes de X están vivos actualmente: ...", parent=newSearch)
-    elif newSearch.cmbxOptions.get() == "¿Cuántas personas nacieron en los últimos 10 años?":
-        messagebox.showinfo("Respuesta", "Las personas nacieron en los últimos 10 años: ...", parent=newSearch)
-    elif newSearch.cmbxOptions.get() == "¿Cuáles parejas actuales tienen 2 o más hijos en común?":
-        messagebox.showinfo("Respuesta", "Las parejas actuales tienen 2 o más hijos en común: ...", parent=newSearch)
-    elif newSearch.cmbxOptions.get() == "¿Cuántas personas fallecieron antes de cumplir 50 años?":
-        messagebox.showinfo("Respuesta", "Las personas fallecieron antes de cumplir 50 años: ...", parent=newSearch)
+        newSearch.btnSearch.configure(command=lambda: _ask_two_ids_and_run(newSearch, fam, "relation"))
+    elif selection == "¿Quiénes son los primos de primer grado de X?":
+        newSearch.lblReqId.config(text="Ingrese cédula de X:")
+        newSearch.lblReqId.place(x=50, y=200)
+        newSearch.txtReqId.place(x=50, y=250)
+        newSearch.txtReqId2.place_forget()
+        newSearch.btnSearch.place(x=50, y=300)
+        newSearch.btnSearch.configure(command=lambda: _ask_one_id_and_list(newSearch, fam,
+            lambda c, x, f: c.list_first_cousins(x, f), "Primos de 1er grado"))
+
+    elif selection == "¿Cuáles son todos los antepasados maternos de X?":
+        newSearch.lblReqId.config(text="Ingrese cédula de X:")
+        newSearch.lblReqId.place(x=50, y=200)
+        newSearch.txtReqId.place(x=50, y=250)
+        newSearch.txtReqId2.place_forget()
+        newSearch.btnSearch.place(x=50, y=300)
+        newSearch.btnSearch.configure(command=lambda: _ask_one_id_and_list(newSearch, fam,
+            lambda c, x, f: c.list_maternal_ancestors(x, f, 10), "Línea materna"))
+
+    elif selection == "¿Cuáles descendientes de X están vivos actualmente?":
+        newSearch.lblReqId.config(text="Ingrese cédula de X:")
+        newSearch.lblReqId.place(x=50, y=200)
+        newSearch.txtReqId.place(x=50, y=250)
+        newSearch.txtReqId2.place_forget()
+        newSearch.btnSearch.place(x=50, y=300)
+        newSearch.btnSearch.configure(command=lambda: _ask_one_id_and_list(newSearch, fam,
+            lambda c, x, f: c.list_living_descendants(x), "Descendientes vivos"))
+
+    elif selection == "¿Cuántas personas nacieron en los últimos 10 años?":
+        _list_recent_births_ui(newSearch)
+
+    elif selection == "¿Cuáles parejas actuales tienen 2 o más hijos en común?":
+        _list_couples_2_children_ui(newSearch)
+
+    elif selection == "¿Cuántas personas fallecieron antes de cumplir 50 años?":
+        _list_died_before_50_ui(newSearch)
 
 def lookingFor(searchWindow):
     if searchWindow.choice.get() == 1 or searchWindow.choice.get() == 2:
