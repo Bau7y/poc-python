@@ -7,6 +7,10 @@ from tkinter import messagebox
 
 
 def simulation_tick(root):
+    global _SIM_AFTER_ID
+    if not SIM_RUNNING:
+        return  # no ejecutar nada si está pausado
+
     conn = DBConnection()
     try:
         unions_cross = conn.auto_create_unions_cross(prob_attempt=0.50, max_pairs=4)
@@ -25,7 +29,31 @@ def simulation_tick(root):
         print("Simulación error:", e)
     finally:
         conn.closeConnection()
-    root.after(SIM_INTERVAL_MS, lambda: simulation_tick(root))
+
+    # reprogramar solo si seguimos corriendo
+    if SIM_RUNNING:
+        _SIM_AFTER_ID = root.after(SIM_INTERVAL_MS, lambda: simulation_tick(root))
+
+
+def start_simulation(root):
+    global SIM_RUNNING, _SIM_AFTER_ID
+    if SIM_RUNNING:
+        return
+    SIM_RUNNING = True
+    _SIM_AFTER_ID = root.after(1, lambda: simulation_tick(root))
+    root.winfo_toplevel().title("Árbol genealógico | Simulación iniciada")
+
+
+def stop_simulation(root):
+    global SIM_RUNNING, _SIM_AFTER_ID
+    SIM_RUNNING = False
+    if _SIM_AFTER_ID is not None:
+        try:
+            root.after_cancel(_SIM_AFTER_ID)
+        except Exception:
+            pass
+        _SIM_AFTER_ID = None
+    root.winfo_toplevel().title("Árbol genealógico | Simulación en pausa")
 
 def run(timeLine):
     try:
@@ -311,14 +339,13 @@ def newPerson():
     newPerson.btnSave.configure(command = lambda: savePerson(newPerson))
     newPerson.grab_set()
 
-def borrarTodo():
-    answer = messagebox.askyesno("Borrar todo", "¿Está seguro que desea borrar todos los datos?")
+def resetValues():
+    answer = messagebox.askyesno("Borrar datos", "¿Está seguro que desea borrar los datos?")
     if answer:
         conn = DBConnection()
-        conn.delAllDataP1()
-        conn.delAllDataP2()
+        conn.resetAllData()
         conn.closeConnection()
-        messagebox.showinfo("Éxito", "Se borraron todos los datos de la familia 1 y 2")
+        messagebox.showinfo("Éxito", "Se restablecieron todos los eventos de la familia 1 y 2")
 
 
 def mnuHandler():
@@ -328,7 +355,7 @@ def mnuHandler():
     screen.mnuArchivo.add_command(label="Anexar Padres Familia 1", command=addParentsFam1)
     screen.mnuArchivo.add_command(label="Anexar Padres Familia 2", command=addParentsFam2)
     screen.mnuArchivo.add_separator()
-    screen.mnuArchivo.add_command(label="Borrar todo", underline=0, command=borrarTodo)
+    screen.mnuArchivo.add_command(label="Reiniciar", underline=0, command=resetValues)
     screen.mnuArchivo.add_command(label="Salir", command=screen.quit)
 
     screen.mnuVer.add_command(label="Ver Familia 1", underline=0, command=showFam1)
@@ -338,11 +365,17 @@ def mnuHandler():
     screen.mnuVer.add_separator()
     screen.mnuVer.add_command(label="Ver Árbol Genealógico", underline=0, command=showTree)
 
+    screen.mnuSimulacion.add_command(label="Iniciar", underline=0, command= lambda: start_simulation(screen))
+    screen.mnuSimulacion.add_separator()
+    screen.mnuSimulacion.add_command(label="Detener", underline=0, command= lambda: stop_simulation(screen))
+
     screen.mnuBuscar.add_command(label="Buscar", underline=0, command=showSearch)
 
 
 if __name__ == "__main__":
     SIM_INTERVAL_MS = 10_000  # 10 segundos
+    SIM_RUNNING = False
+    _SIM_AFTER_ID = None
     screen = PrincipalWindow()
     mnuHandler()
     screen.after(SIM_INTERVAL_MS, lambda: simulation_tick(screen))

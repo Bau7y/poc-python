@@ -63,14 +63,14 @@ class DBConnection:
         self.conn.commit()
 
     
-    def delAllDataP1(self):
-        self.cursor.execute("DELETE * FROM Personas")
+    def resetAllData(self):
+        self.cursor.execute("DELETE * FROM HistorialEventos")
         self.cursor.execute("DELETE * FROM RelacionesFam1")
-        self.conn.commit()
-    
-    def delAllDataP2(self):
-        self.cursor.execute("DELETE * FROM Personas2")
+        self.cursor.execute("DELETE * FROM PadreHijo1")
+        self.cursor.execute("DELETE * FROM Tutorias")
+        self.cursor.execute("DELETE * FROM PadreHijo2")
         self.cursor.execute("DELETE * FROM RelacionesFam2")
+        self.cursor.execute("DELETE * FROM RelacionesCross")
         self.conn.commit()
 
 

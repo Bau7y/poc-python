@@ -26,9 +26,11 @@ class PrincipalWindow(Tk):
         self.mnuArchivo = Menu(self.barraMnu, tearoff=0, bg="#000000", fg="#ffffff")
         self.mnuVer = Menu(self.barraMnu, tearoff=0, bg="#000000", fg="#ffffff")
         self.mnuBuscar = Menu(self.barraMnu, tearoff=0, bg="#000000", fg="#ffffff")
+        self.mnuSimulacion = Menu(self.barraMnu, tearoff=0, bg="#000000", fg="#ffffff")
         self.barraMnu.add_cascade(label="Archivo", menu=self.mnuArchivo, underline=0)
         self.barraMnu.add_cascade(label="Ver", menu=self.mnuVer, underline=0)
         self.barraMnu.add_cascade(label="Buscar", menu=self.mnuBuscar, underline=0)
+        self.barraMnu.add_cascade(label="Simulación", menu=self.mnuSimulacion, underline=0)
         self.configure(menu=self.barraMnu)
 
 
@@ -415,10 +417,22 @@ class TreeWindow(Toplevel):
         fill = "#1976D2" if fam == 1 else "#2E7D32"
         outline = "#E0E0E0"
         if dead: fill = "#616161"
-        self.canvas.create_oval(x-r, y-r, x+r, y+r, fill=fill, outline=outline, width=2)
+        tag = f"node_{pid}_{fam}"
+        self.canvas.create_oval(x-r, y-r, x+r, y+r, fill=fill, outline=outline, width=2, tags=(tag,))
         label = f"{pid}\nF{fam}"
-        self.canvas.create_text(x, y+42, text=label, fill="#ddd", font=("Segoe UI", 9))
-        self.canvas.create_text(x, y-40, text=name[:14], fill="#fff", font=("Segoe UI", 9, "bold"))
+        self.canvas.create_text(x, y+42, text=label, fill="#ddd", font=("Segoe UI", 9), tags=(tag,))
+        self.canvas.create_text(x, y-40, text=name[:14], fill="#fff", font=("Segoe UI", 9, "bold"), tags=(tag,))
+
+        # Doble click: convertir este nodo en nueva raíz y redibujar
+        def on_dbl(_e, _pid=pid, _fam=fam):
+            try:
+                self.cmbFam.set(str(_fam))
+                self.txtId.delete(0, tk.END)
+                self.txtId.insert(0, str(_pid))
+                self.draw_tree()
+            except Exception as ex:
+                messagebox.showerror("Árbol", f"No se pudo recentrar: {ex}", parent=self)
+        self.canvas.tag_bind(tag, "<Double-1>", on_dbl)
 
     def _draw_edges(self, conn: DBConnection):
         # Conecta padre -> hijo con líneas; une cónyuges con línea horizontal
