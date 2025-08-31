@@ -589,3 +589,47 @@ class TreeWindow(Toplevel):
             levels.append(layer)  # descendientes “abajo”
             cur = kids
         return levels
+    
+class EventsWindow(tk.Toplevel):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.title("Eventos")
+        self.geometry("960x560")
+        self.resizable(True, True)
+
+        top = tk.Frame(self); top.pack(side="top", fill="x", padx=10, pady=6)
+
+        tk.Label(top, text="Familia:").grid(row=0, column=0, padx=4)
+        self.cmbFam = ttk.Combobox(top, values=["Todas","1","2"], width=8, state="readonly"); self.cmbFam.current(0)
+        self.cmbFam.grid(row=0, column=1, padx=4)
+
+        tk.Label(top, text="Tipo:").grid(row=0, column=2, padx=8)
+        self.cmbTipo = ttk.Combobox(top, values=[
+            "Todos","Nacimiento","Nacimiento de hijo","Unión (interna)","Unión (cross)",
+            "Fallecimiento","Viudez","TutorAsignado","TutorPendiente"
+        ], width=20, state="readonly")
+        self.cmbTipo.current(0); self.cmbTipo.grid(row=0, column=3, padx=4)
+
+        tk.Label(top, text="Cédula:").grid(row=0, column=4, padx=8)
+        self.txtId = ttk.Entry(top, width=14); self.txtId.grid(row=0, column=5, padx=4)
+
+        self.chkSimVar = tk.BooleanVar(value=False)
+        self.chkSim = ttk.Checkbutton(top, text="Solo [SIM]", variable=self.chkSimVar)
+        self.chkSim.grid(row=0, column=6, padx=10)
+
+        self.btnBuscar = ttk.Button(top, text="Actualizar")
+        self.btnBuscar.grid(row=0, column=7, padx=8)
+        self.btnExport = ttk.Button(top, text="Exportar CSV")
+        self.btnExport.grid(row=0, column=8, padx=8)
+
+        cols = ("fecha","tipo","id","nombre","fam","detalle")
+        self.tree = ttk.Treeview(self, columns=cols, show="headings", height=22)
+        self.tree.heading("fecha", text="Fecha");   self.tree.column("fecha", width=160, anchor="w")
+        self.tree.heading("tipo", text="Tipo");     self.tree.column("tipo", width=160, anchor="w")
+        self.tree.heading("id", text="Cédula");     self.tree.column("id", width=110, anchor="center")
+        self.tree.heading("nombre", text="Nombre"); self.tree.column("nombre", width=220, anchor="w")
+        self.tree.heading("fam", text="Fam");       self.tree.column("fam", width=60, anchor="center")
+        self.tree.heading("detalle", text="Detalle"); self.tree.column("detalle", width=230, anchor="w")
+        self.tree.pack(side="top", fill="both", expand=True, padx=10, pady=6)
+
+        self._refresh_job = None  # id de after para auto-refresh

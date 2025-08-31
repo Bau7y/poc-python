@@ -4,54 +4,126 @@
 #para que el calendario funcione se debe instalar el módulo tkcalendar 
 from WindowCnfg import *
 from tkinter import messagebox
+import csv, datetime as dt
+from DataBaseConnection import DBConnection
+
+
+def open_events_screen():
+    win = EventsWindow()
+
+    def refresh():
+        fam = None
+        fsel = win.cmbFam.get()
+        if fsel in ("1","2"):
+            fam = int(fsel)
+        tipo = None if win.cmbTipo.get()=="Todos" else win.cmbTipo.get()
+        pid = None
+        pid_txt = win.txtId.get().strip()
+        if pid_txt.isdigit():
+            pid = int(pid_txt)
+
+        conn = DBConnection()
+        try:
+            rows = conn.list_events(fam=fam, person_id=pid, tipo=tipo, limit=500)
+            # filtro adicional: solo [SIM] si se marcó
+            if win.chkSimVar.get():
+                rows = [r for r in rows if ("[SIM]" in r["detalle"]) or ("[SIM]" in r["tipo"])]
+            # poblar
+            for item in win.tree.get_children():
+                win.tree.delete(item)
+            for r in rows:
+                nombre = conn.get_person_name(r["id"], r["fam"])
+                win.tree.insert("", "end", values=(str(r["fecha"]), r["tipo"], r["id"], nombre, r["fam"], r["detalle"]))
+        finally:
+            conn.closeConnection()
+
+    def export_csv():
+        items = [win.tree.item(i,"values") for i in win.tree.get_children()]
+        if not items:
+            messagebox.showwarning("Exportar", "No hay datos para exportar.", parent=win); return
+        path = "eventos_export.csv"
+        with open(path, "w", newline="", encoding="utf-8") as f:
+            w = csv.writer(f)
+            w.writerow(["Fecha","Tipo","Cedula","Nombre","Familia","Detalle"])
+            for v in items: w.writerow(list(v))
+        messagebox.showinfo("Exportar", f"Archivo generado: {path}", parent=win)
+
+    def schedule_auto_refresh():
+        # auto-refresh solo mientras la ventana está abierta; si la simulación corre, refresca más seguido
+        if getattr(win, "_refresh_job", None):
+            win.after_cancel(win._refresh_job)
+        refresh()
+        # si la simulación está corriendo, refrescamos cada ~2s; si no, cada 8s
+        interval = 2000 if 'SIM_RUNNING' in globals() and SIM_RUNNING else 8000
+        win._refresh_job = win.after(interval, schedule_auto_refresh)
+
+    def on_close():
+        if getattr(win, "_refresh_job", None):
+            try: win.after_cancel(win._refresh_job)
+            except Exception: pass
+        win.destroy()
+
+    win.btnBuscar.configure(command=refresh)
+    win.btnExport.configure(command=export_csv)
+
+    # primer refresh + arranque del ciclo
+    schedule_auto_refresh()
+    win.protocol("WM_DELETE_WINDOW", on_close)
+    win.grab_set()
 
 
 def simulation_tick(root):
-    global _SIM_AFTER_ID
+    global _SIM_AFTER_ID, SIM_YEAR
     if not SIM_RUNNING:
-        return  # no ejecutar nada si está pausado
+        return
+
+    # Fecha simulada = 1 de enero del año SIM
+    sim_date = dt.date(SIM_YEAR, 1, 1)
 
     conn = DBConnection()
     try:
-        unions_cross = conn.auto_create_unions_cross(prob_attempt=0.50, max_pairs=4)
+        unions_cross = conn.auto_create_unions_cross(prob_attempt=0.50, max_pairs=4,
+                                                     sim_date=sim_date, mark_sim=True)
 
         total_deaths = 0
         for fam in (1, 2):
-            conn.tick_birthdays(fam)                 # no persiste edad
-            total_deaths += conn.tick_deaths(fam, prob=0.05)
+            conn.tick_birthdays(fam)  # no persiste edad
+            total_deaths += conn.tick_deaths(fam, prob=0.05, sim_date=sim_date)
 
-        births_cross = conn.tick_births_cross(prob_per_couple=0.35)
+        births_cross = conn.tick_births_cross(prob_per_couple=0.35, sim_date=sim_date)
 
         root.winfo_toplevel().title(
-            f"Árbol genealógico | Cross Unions:{unions_cross}  Cross Births:{births_cross}  Fallec:{total_deaths}"
+            f"Árbol genealógico | Año SIM:{SIM_YEAR}  Cross Unions:{unions_cross}  Cross Births:{births_cross}  Fallec:{total_deaths}"
         )
     except Exception as e:
         print("Simulación error:", e)
     finally:
         conn.closeConnection()
 
-    # reprogramar solo si seguimos corriendo
+    # siguiente tick: avanza un año
+    SIM_YEAR += 1
     if SIM_RUNNING:
         _SIM_AFTER_ID = root.after(SIM_INTERVAL_MS, lambda: simulation_tick(root))
 
 
 def start_simulation(root):
-    global SIM_RUNNING, _SIM_AFTER_ID
+    global SIM_RUNNING, _SIM_AFTER_ID, SIM_YEAR
     if SIM_RUNNING:
         return
+    # Año inicial: toma el año actual si no está fijado
+    if SIM_YEAR is None:
+        SIM_YEAR = dt.date.today().year
     SIM_RUNNING = True
     _SIM_AFTER_ID = root.after(1, lambda: simulation_tick(root))
-    root.winfo_toplevel().title("Árbol genealógico | Simulación iniciada")
+    root.winfo_toplevel().title(f"Árbol genealógico | Simulación iniciada (Año SIM {SIM_YEAR})")
 
 
 def stop_simulation(root):
     global SIM_RUNNING, _SIM_AFTER_ID
     SIM_RUNNING = False
     if _SIM_AFTER_ID is not None:
-        try:
-            root.after_cancel(_SIM_AFTER_ID)
-        except Exception:
-            pass
+        try: root.after_cancel(_SIM_AFTER_ID)
+        except Exception: pass
         _SIM_AFTER_ID = None
     root.winfo_toplevel().title("Árbol genealógico | Simulación en pausa")
 
@@ -352,6 +424,26 @@ def resetValues():
         conn.closeConnection()
         messagebox.showinfo("Éxito", "Se restablecieron todos los eventos de la familia 1 y 2")
 
+def clear_sim_data(root):
+    if messagebox.askyesno("Borrar datos de simulación", "Esto eliminará Nacimientos/Uniones/Defunciones creados durante la simulación. ¿Continuar?"):
+        conn = DBConnection()
+        try:
+            res = conn.reset_sim_changes()
+        except AttributeError:
+            messagebox.showerror("Error", "No hay datos de simulación para borrar", parent=root)
+        finally:
+            conn.closeConnection()
+        msg = (
+            f"Personas borradas: {res['personas_borradas']}\n"
+            f"PH borrados: {res['ph_borrados']}\n"
+            f"Uniones cross borradas: {res['cross_borradas']}\n"
+            f"Fallecimientos revertidos: {res['fallecimientos_revertidos']}\n"
+            f"Viudez revertida: {res['viudez_revertida']}\n"
+            f"Eventos [SIM] borrados: {res['eventos_borrados']}"
+        )
+        messagebox.showinfo("Limpieza completada", msg, parent=root)
+
+
 
 def mnuHandler():
     screen.mnuArchivo.add_command(label="Añadir a Familia 1", underline=0, command=newPerson)
@@ -373,6 +465,10 @@ def mnuHandler():
     screen.mnuSimulacion.add_command(label="Iniciar", underline=0, command= lambda: start_simulation(screen))
     screen.mnuSimulacion.add_separator()
     screen.mnuSimulacion.add_command(label="Detener", underline=0, command= lambda: stop_simulation(screen))
+    screen.mnuSimulacion.add_separator()
+    screen.mnuSimulacion.add_command(label="Borrar Datos Simulacion", underline=0, command= lambda: clear_sim_data(screen))
+    screen.mnuSimulacion.add_separator()
+    screen.mnuSimulacion.add_command(label="Historial (en vivo)", underline=0, command=open_events_screen)
 
     screen.mnuBuscar.add_command(label="Buscar", underline=0, command=showSearch)
 
@@ -381,6 +477,7 @@ if __name__ == "__main__":
     SIM_INTERVAL_MS = 10_000  # 10 segundos
     SIM_RUNNING = False
     _SIM_AFTER_ID = None
+    SIM_YEAR = None
     screen = PrincipalWindow()
     mnuHandler()
     screen.after(SIM_INTERVAL_MS, lambda: simulation_tick(screen))

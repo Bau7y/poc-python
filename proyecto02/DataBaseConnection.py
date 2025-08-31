@@ -293,30 +293,28 @@ class DBConnection:
         return 0
 
     # ------- Fallecimientos aleatorios -------
-    def tick_deaths(self, fam:int, prob:float=0.05):
+    def tick_deaths(self, fam:int, prob:float=0.05, sim_date: dt.date | None = None):
         person_table, _, _ = self._tables_by_family(fam)
-
         self.cursor.execute(f"SELECT ID, FechaFallecimiento FROM {person_table}")
         rows = self.cursor.fetchall()
 
-        today = dt.date.today()
         deaths = 0
         for (pid, fdef) in rows:
             if fdef:  # ya fallecido
                 continue
             if random.random() < prob:
+                fecha = sim_date or dt.date.today()
                 self.cursor.execute(
                     f"UPDATE {person_table} SET FechaFallecimiento=? WHERE ID=?",
-                    (today, int(pid))
+                    (fecha, int(pid))
                 )
                 self.conn.commit()
                 deaths += 1
                 # Historial + efectos
-                self._log_event(int(pid), fam, "Fallecimiento", "Marcado por simulación")
+                self._log_event(int(pid), fam, "Fallecimiento", "Marcado por simulación [SIM]")
                 try:
                     self._handle_death_side_effects(int(pid), fam)
                 except Exception as e:
-                    # Si algo falla, no rompas la simulación
                     print("Side-effects error:", e)
 
         return deaths
@@ -478,50 +476,40 @@ class DBConnection:
                 )
         return singles
 
-    def auto_create_unions_cross(self, prob_attempt: float = 0.40, max_pairs: int = 3) -> int:
-        """
-        Crea hasta 'max_pairs' parejas entre familias (F1<->F2) según afinidad.
-        Marca FechaUnion y TipoUnion='Afinidad Cross' y cambia EstadoCivil a 'Casado'.
-        """
+    def auto_create_unions_cross(self, prob_attempt: float = 0.40, max_pairs: int = 3,
+                             sim_date: dt.date | None = None, mark_sim: bool = False) -> int:
         self._ensure_relaciones_cross()
         singles1 = self._list_eligible_singles_cross(1)
         singles2 = self._list_eligible_singles_cross(2)
         if not singles1 or not singles2:
             return 0
 
-        random.shuffle(singles1)
-        random.shuffle(singles2)
+        random.shuffle(singles1); random.shuffle(singles2)
         created = 0
-
         for a, b in zip(singles1, singles2):
-            if created >= max_pairs:
-                break
-            if random.random() > prob_attempt:
+            if created >= max_pairs: break
+            if random.random() > prob_attempt: continue
+            if not self._are_eligible_to_unite(a, b, 1):  # chequeo básico
                 continue
 
-            # Reglas (edad, diferencia, compatibilidad, no hermanos intra-familia)
-            if not self._are_eligible_to_unite(a, b, 1):  # usa PH1 para chequear hermanos
-                continue
-
-            # Evitar duplicado cross (cualquier orden)
+            # evitar duplicado
             self.cursor.execute(
                 """SELECT 1 FROM RelacionesCross
                 WHERE (IdPersonaA=? AND FamA=1 AND IdPersonaB=? AND FamB=2)
                     OR (IdPersonaA=? AND FamA=2 AND IdPersonaB=? AND FamB=1)""",
                 (int(a.getId()), int(b.getId()), int(b.getId()), int(a.getId()))
             )
-            if self.cursor.fetchone():
-                continue
+            if self.cursor.fetchone(): continue
 
-            # Insertar unión cross
+            tipo = "Afinidad Cross" + (" [SIM]" if mark_sim else "")
+            fecha = sim_date or dt.date.today()
             self.cursor.execute(
                 "INSERT INTO RelacionesCross (IdPersonaA, FamA, IdPersonaB, FamB, FechaUnion, TipoUnion) VALUES (?, 1, ?, 2, ?, ?)",
-                (int(a.getId()), int(b.getId()), datetime.now(), "Afinidad Cross")
+                (int(a.getId()), int(b.getId()), fecha, tipo)
             )
-            self._log_event(int(a.getId()), 1, "Unión (cross)", f"Con {int(b.getId())} (F2)")
-            self._log_event(int(b.getId()), 2, "Unión (cross)", f"Con {int(a.getId())} (F1)")
+            self._log_event(int(a.getId()), 1, "Unión (cross)", f"Con {int(b.getId())} (F2){' [SIM]' if mark_sim else ''}")
+            self._log_event(int(b.getId()), 2, "Unión (cross)", f"Con {int(a.getId())} (F1){' [SIM]' if mark_sim else ''}")
 
-            # Cambiar estado civil (opcional pero útil)
             self.cursor.execute("UPDATE Personas  SET EstadoCivil=? WHERE ID=?", ("Casado", int(a.getId())))
             self.cursor.execute("UPDATE Personas2 SET EstadoCivil=? WHERE ID=?", ("Casado", int(b.getId())))
             self.conn.commit()
@@ -565,13 +553,7 @@ class DBConnection:
                 couples.append((int(ida), int(fama), int(idb), int(famb)))
         return couples
 
-    def tick_births_cross(self, prob_per_couple: float = 0.25) -> int:
-        """
-        Genera nacimientos para parejas CROSS:
-        - El bebé nace en la familia del padre (por convención).
-        - Se insertan dos vínculos en PadreHijo{fam_bebe}: (padre->hijo) y (madre->hijo).
-          (Nota: el ID de la madre es de la otra familia, pero nos sirve para inferir parentescos por ID único de cédula).
-        """
+    def tick_births_cross(self, prob_per_couple: float = 0.25, sim_date: dt.date | None = None) -> int:
         births = 0
         couples = self.list_cross_couples()
         if not couples:
@@ -582,68 +564,55 @@ class DBConnection:
             pb = self.searchPerson(idb, famb)
             if pa is None or pb is None:
                 continue
-            # Reglas de elegibilidad (usa fam del padre para chequeo básico de consanguinidad)
-            base_fam_for_rules = 1  # indiferente, solo necesita una PH para la verificación de hermanos
-            if not self._are_eligible_to_unite(pa, pb, base_fam_for_rules):
+            if not self._are_eligible_to_unite(pa, pb, 1):
                 continue
             if random.random() >= prob_per_couple:
                 continue
 
             father_id, father_fam, mother_id, mother_fam = self._assign_roles_cross(pa, pb)
-            bebe_fam = father_fam  # convención: bebé nace en la familia del padre
+            bebe_fam = father_fam
             person_table, _, ph_table = self._tables_by_family(bebe_fam)
 
-            # Generar datos del bebé
+            # genera ID nuevo
             new_id = random.randint(10_000_000, 99_999_999)
             self.cursor.execute(f"SELECT 1 FROM {person_table} WHERE ID=?", (int(new_id),))
             if self.cursor.fetchone():
                 continue
 
+            # datos bebé
+            genero = random.choice(["Masculino","Femenino"])
             nombres_m = ["Ana","María","Laura","Sofía","Lucía"]
             nombres_h = ["Juan","Carlos","Pedro","José","Diego"]
-            genero = random.choice(["Masculino","Femenino"])
             nombre = random.choice(nombres_h if genero.startswith("M") else nombres_m)
-            hoy = dt.date.today()
 
-            # Apellidos: 1° del padre, 2° de la madre (estilo CR)
             if father_fam == 1:
-                padre = pa
-                madre = pb
+                padre, madre = pa, pb
             else:
-                padre = pb
-                madre = pa
-
+                padre, madre = pb, pa
             last1 = padre.getLastName1()
             last2 = madre.getLastName2()
-
             provincia = random.choice([pa.getProvince(), pb.getProvince()])
             nucleo = padre.getNucleo()
 
+            hoy_sim = sim_date or dt.date.today()
+
             bebe = Persona(
-                personId=new_id,
-                name=nombre,
-                lastName1=last1,
-                lastName2=last2,
-                birthDate=hoy,
-                deathDate=None,
-                gender=genero,
-                province=provincia,
-                civilState="Soltero",
-                nucleo=nucleo
+                personId=new_id, name=nombre, lastName1=last1, lastName2=last2,
+                birthDate=hoy_sim, deathDate=None, gender=genero,
+                province=provincia, civilState="Soltero", nucleo=nucleo
             )
+            # inserta en la familia del bebé
+            if bebe_fam == 1: self.dataInsertFam1(bebe)
+            else:              self.dataInsertFam2(bebe)
 
-            # Inserta en la familia del bebé
-            if bebe_fam == 1:
-                self.dataInsertFam1(bebe)
-            else:
-                self.dataInsertFam2(bebe)
-
-            # Vincula en PH de la familia del bebé con ambos padres (IDs globales de cédula)
+            # vínculos PH
             self.cursor.execute(f"INSERT INTO {ph_table} (IdPadre, IdHijo) VALUES (?, ?)", (int(father_id), int(new_id)))
             self.cursor.execute(f"INSERT INTO {ph_table} (IdPadre, IdHijo) VALUES (?, ?)", (int(mother_id), int(new_id)))
-            self._log_event(int(new_id), bebe_fam, "Nacimiento", f"{nombre} {last1} {last2}".strip())
-            self._log_event(int(father_id), father_fam, "Nacimiento de hijo", f"Hijo {int(new_id)} (F{bebe_fam})")
-            self._log_event(int(mother_id), mother_fam, "Nacimiento de hijo", f"Hijo {int(new_id)} (F{bebe_fam})")
+
+            # historial
+            self._log_event(int(new_id), bebe_fam, "Nacimiento", f"{nombre} {last1} {last2} [SIM]")
+            self._log_event(int(father_id), father_fam, "Nacimiento de hijo", f"Hijo {int(new_id)} (F{bebe_fam}) [SIM]")
+            self._log_event(int(mother_id), mother_fam, "Nacimiento de hijo", f"Hijo {int(new_id)} (F{bebe_fam}) [SIM]")
 
             self.conn.commit()
             births += 1
@@ -1099,6 +1068,125 @@ class DBConnection:
         events.sort(key=lambda x: self._to_date(x["fecha"]) or dt.date.min)
         return events
 
+    def reset_sim_changes(self) -> dict:
+        """
+        Elimina todo lo que se marcó como de simulación ([SIM]) y revierte efectos:
+        - Borra Nacimientos [SIM] (Personas/Personas2) y sus PH asociados.
+        - Borra RelacionesCross con TipoUnion que termine en [SIM].
+        - Pone NULL FechaFallecimiento a quienes murieron con 'Marcado por simulación [SIM]'.
+        - Revierte Viudez -> 'Casado' cuando aplica (si aún hay unión vigente).
+        - Limpia eventos HistorialEventos con '[SIM]'.
+        Retorna un resumen con contadores.
+        """
+        summary = {"personas_borradas":0, "ph_borrados":0, "cross_borradas":0, "fallecimientos_revertidos":0, "viudez_revertida":0, "eventos_borrados":0}
+
+        # 1) Identificar bebés creados por sim a partir del historial
+        sim_babies = []  # (id, fam)
+        try:
+            self.cursor.execute("SELECT IdPersona, Familia FROM HistorialEventos WHERE Tipo='Nacimiento' AND Detalle LIKE '%[SIM]%'")
+            sim_babies = [(int(r[0]), int(r[1])) for r in self.cursor.fetchall()]
+        except Exception:
+            pass
+
+        # 2) Borrar PH de esos bebés y luego la persona
+        for (pid, fam) in sim_babies:
+            _, _, ph_table = self._tables_by_family(fam)
+            self.cursor.execute(f"DELETE FROM {ph_table} WHERE IdHijo=?", (int(pid),))
+            summary["ph_borrados"] += self.cursor.rowcount or 0
+            person_table, _, _ = self._tables_by_family(fam)
+            self.cursor.execute(f"DELETE FROM {person_table} WHERE ID=?", (int(pid),))
+            summary["personas_borradas"] += self.cursor.rowcount or 0
+            self.conn.commit()
+
+        # 3) Borrar uniones cross [SIM]
+        if self._table_exists("RelacionesCross"):
+            self.cursor.execute("DELETE FROM RelacionesCross WHERE TipoUnion LIKE '%[SIM]%'")
+            summary["cross_borradas"] += self.cursor.rowcount or 0
+            self.conn.commit()
+
+        # 4) Revertir fallecimientos simulados
+        #    Buscar personas con evento 'Fallecimiento' marcado [SIM]
+        try:
+            self.cursor.execute("SELECT IdPersona, Familia FROM HistorialEventos WHERE Tipo='Fallecimiento' AND Detalle LIKE '%[SIM]%'")
+            to_revive = [(int(r[0]), int(r[1])) for r in self.cursor.fetchall()]
+        except Exception:
+            to_revive = []
+        for (pid, fam) in to_revive:
+            person_table, rel_table, _ = self._tables_by_family(fam)
+            # borrar fecha fallecimiento
+            self.cursor.execute(f"UPDATE {person_table} SET FechaFallecimiento=NULL WHERE ID=?", (int(pid),))
+            if self.cursor.rowcount:
+                summary["fallecimientos_revertidos"] += 1
+            # si su cónyuge quedó 'Viudo' por sim, y siguen unidos -> volver a 'Casado'
+            # (uniones internas)
+            self.cursor.execute(f"SELECT IdPadre, IdMadre FROM {rel_table} WHERE IdPadre=? OR IdMadre=?", (int(pid), int(pid)))
+            spouses = []
+            for (p,m) in self.cursor.fetchall():
+                if p == pid: spouses.append(m)
+                if m == pid: spouses.append(p)
+            for sp in set(spouses):
+                # si el cónyuge vive, volver a 'Casado'
+                self.cursor.execute(f"SELECT FechaFallecimiento FROM {person_table} WHERE ID=?", (int(sp),))
+                r = self.cursor.fetchone()
+                if r and r[0] is None:
+                    self.cursor.execute(f"UPDATE {person_table} SET EstadoCivil='Casado' WHERE ID=?", (int(sp),))
+                    if self.cursor.rowcount:
+                        summary["viudez_revertida"] += 1
+            self.conn.commit()
+
+        # 5) Borrar eventos del historial con [SIM]
+        try:
+            self.cursor.execute("DELETE FROM HistorialEventos WHERE Detalle LIKE '%[SIM]%' OR Tipo LIKE '%[SIM]%'")
+            summary["eventos_borrados"] += self.cursor.rowcount or 0
+            self.conn.commit()
+        except Exception:
+            pass
+
+        return summary
+
+
+    def get_person_name(self, pid:int, fam:int) -> str:
+        """Devuelve 'Nombre Apellido Apellido2' o '' si no existe."""
+        person_table, _, _ = self._tables_by_family(fam)
+        self.cursor.execute(f"SELECT Nombre, Apellido, Apellido2 FROM {person_table} WHERE ID=?", (int(pid),))
+        r = self.cursor.fetchone()
+        if not r: 
+            return ""
+        nom, a1, a2 = (r[0] or "").strip(), (r[1] or "").strip(), (r[2] or "").strip()
+        return f"{nom} {a1} {a2}".strip()
+    
+    def list_events(self, fam:int|None=None, person_id:int|None=None,
+                tipo:str|None=None, date_from=None, date_to=None, limit:int=500):
+        """
+        Devuelve lista de dicts: {id, fam, fecha, tipo, detalle} desde HistorialEventos,
+        con filtros opcionales.
+        """
+        # Verifica que la tabla exista
+        try:
+            self.cursor.execute("SELECT 1 FROM HistorialEventos WHERE 1=0")
+        except Exception:
+            return []
+
+        q = "SELECT IdPersona, Familia, Fecha, Tipo, Detalle FROM HistorialEventos WHERE 1=1"
+        params = []
+        if fam in (1,2):
+            q += " AND Familia=?"; params.append(int(fam))
+        if person_id is not None:
+            q += " AND IdPersona=?"; params.append(int(person_id))
+        if tipo and tipo.strip():
+            q += " AND Tipo=?"; params.append(tipo.strip())
+        if date_from is not None:
+            q += " AND Fecha >= ?"; params.append(date_from)
+        if date_to is not None:
+            q += " AND Fecha <= ?"; params.append(date_to)
+        q += " ORDER BY Fecha DESC"
+
+        self.cursor.execute(q, tuple(params))
+        rows = self.cursor.fetchall()
+        out = []
+        for (pid, ff, fec, tp, det) in rows[:limit]:
+            out.append({"id": int(pid), "fam": int(ff), "fecha": fec, "tipo": tp, "detalle": det or ""})
+        return out
 
         
 
