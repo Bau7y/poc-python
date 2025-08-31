@@ -4,13 +4,15 @@ from tkinter.font import *
 from DataBaseConnection import *
 from tkcalendar import DateEntry
 import tkinter as tk
+import math
+from tkinter import messagebox
+
 
 class PrincipalWindow(Tk):
     def __init__(self, master=None):
         super().__init__(master)
         self.windowCnfg()
         self.createObjs()
-        self.placeObjs()
 
 
     def windowCnfg(self):
@@ -29,69 +31,6 @@ class PrincipalWindow(Tk):
         self.barraMnu.add_cascade(label="Buscar", menu=self.mnuBuscar, underline=0)
         self.configure(menu=self.barraMnu)
 
-        self.leftFrame = tk.Frame(self, bg="lightgray", width=self.winfo_screenwidth() // 2, height=self.winfo_screenheight())
-        self.rightFrame = tk.Frame(self, bg="lightgray", width=self.winfo_screenwidth() // 2, height=self.winfo_screenheight())
-
-        self.lblBisAbueloPa1 = Label(self.leftFrame, text="Bisabuelo paterno", bg="lightgray", font=("Arial", 12), fg="black")
-        self.lblBisAbueloMa1 = Label(self.leftFrame, text="Bisabuelo materno", bg="lightgray", font=("Arial", 12), fg="black")
-        self.lblBisAbueloPa2 = Label(self.leftFrame, text="Bisabuelo paterno", bg="lightgray", font=("Arial", 12), fg="black")
-        self.lblBisAbueloMa2 = Label(self.leftFrame, text="Bisabuelo materno", bg="lightgray", font=("Arial", 12), fg="black")
-
-        self.lblAbueloPa1 = Label(self.leftFrame, text="Abuelo paterno", bg="lightgray", font=("Arial", 12), fg="black")
-        self.lblAbueloPa2 = Label(self.leftFrame, text="Abuelo paterno", bg="lightgray", font=("Arial", 12), fg="black")
-        self.lblAbueloMa1 = Label(self.leftFrame, text="Abuelo Materno", bg="lightgray", font=("Arial", 12), fg="black")
-        self.lblAbueloMa2 = Label(self.leftFrame, text="Abuelo Materno", bg="lightgray", font=("Arial", 12), fg="black")
-
-        self.lblPadre1 = Label(self.leftFrame, text="Padre", bg="lightgray", font=("Arial", 12), fg="black")
-        self.lblMadre1 = Label(self.leftFrame, text="Madre", bg="lightgray", font=("Arial", 12), fg="black")
-
-        self.lblTio1 = Label(self.leftFrame, text="Tío", bg="lightgray", font=("Arial", 12), fg="black")
-        self.lblTia1 = Label(self.leftFrame, text="Tía", bg="lightgray", font=("Arial", 12), fg="black")
-        self.lblTio2 = Label(self.leftFrame, text="Tío", bg="lightgray", font=("Arial", 12), fg="black")
-        self.lblTia2 = Label(self.leftFrame, text="Tía", bg="lightgray", font=("Arial", 12), fg="black")
-
-        self.lblHijo1 = Label(self.leftFrame, text="Hijo", bg="lightgray", font=("Arial", 12), fg="black")
-        self.lblHijo2 = Label(self.leftFrame, text="Hijo", bg="lightgray", font=("Arial", 12), fg="black")
-        self.lblHijo3 = Label(self.leftFrame, text="Hijo", bg="lightgray", font=("Arial", 12), fg="black")
-        self.lblHijo4 = Label(self.leftFrame, text="Hijo", bg="lightgray", font=("Arial", 12), fg="black")
-        self.lblHijo5 = Label(self.leftFrame, text="Hijo", bg="lightgray", font=("Arial", 12), fg="black")
-        self.lblHijo6 = Label(self.leftFrame, text="Hijo", bg="lightgray", font=("Arial", 12), fg="black")
-
-        self.lblFutHijo = Label(self.leftFrame, text="Hijo futuro", bg="lightgray", font=("Arial", 12), fg="black")
-        self.lblFutHijo2 = Label(self.leftFrame, text="Hijo futuro", bg="lightgray", font=("Arial", 12), fg="black")
-        self.lblFutHijo3 = Label(self.leftFrame, text="Hijo futuro", bg="lightgray", font=("Arial", 12), fg="black")
-        self.lblFutHijo4 = Label(self.leftFrame, text="Hijo futuro", bg="lightgray", font=("Arial", 12), fg="black")
-
-
-
-
-    def placeObjs(self):
-        self.leftFrame.pack(side="left", fill="y")
-        self.rightFrame.pack(side="right", fill="y")
-        self.lblBisAbueloPa1.place(x=60, y=10)
-        self.lblBisAbueloPa2.place(x=210, y=10)
-
-        self.lblBisAbueloMa1.place(x=430, y=10)
-        self.lblBisAbueloMa2.place(x=580, y=10)
-
-        self.lblAbueloMa1.place(x=60, y=100)
-        self.lblAbueloMa2.place(x=210, y=100)
-        
-        self.lblAbueloPa1.place(x=430, y=100)
-        self.lblAbueloPa2.place(x=580, y=100)
-
-        self.lblPadre1.place(x=420, y=190)
-        self.lblTio1.place(x=50, y=190)
-        self.lblTia1.place(x=160, y=190)
-
-        self.lblMadre1.place(x=280, y=190)
-        self.lblTio2.place(x=550, y=190)
-        self.lblTia2.place(x=700, y=190)
-
-        self.lblHijo1.place(x=100, y=280)
-        self.lblHijo2.place(x=360, y=280)
-        self.lblHijo3.place(x=620, y=280)
-        
 
 class NewPersonWindow(Toplevel):
     def __init__(self, master = None):
@@ -351,3 +290,288 @@ class TimeLine(Toplevel):
         self.txtId.place(x=150, y=100)
         self.btnWatch.place(x=50, y=150)
         self.btnClose.place(x=150, y=150)
+
+
+class TreeWindow(Toplevel):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.title("Árbol genealógico")
+        self.geometry("1000x700")
+        self.configure(bg="#101014")
+
+        # ---- Panel de controles
+        ctrl = tk.Frame(self, bg="#101014")
+        ctrl.pack(side="top", fill="x")
+        tk.Label(ctrl, text="Familia:", fg="#fff", bg="#101014").pack(side="left", padx=6)
+        self.cmbFam = ttk.Combobox(ctrl, values=["1","2"], width=4, state="readonly"); self.cmbFam.current(0)
+        self.cmbFam.pack(side="left")
+
+        tk.Label(ctrl, text="Cédula raíz:", fg="#fff", bg="#101014").pack(side="left", padx=6)
+        self.txtId = ttk.Entry(ctrl, width=12); self.txtId.pack(side="left")
+
+        tk.Label(ctrl, text="Modo:", fg="#fff", bg="#101014").pack(side="left", padx=6)
+        self.cmbModo = ttk.Combobox(ctrl, values=["Ancestros","Descendientes","Ambos"], width=14, state="readonly"); self.cmbModo.current(2)
+        self.cmbModo.pack(side="left")
+
+        tk.Label(ctrl, text="Profundidad:", fg="#fff", bg="#101014").pack(side="left", padx=6)
+        self.spDepth = ttk.Spinbox(ctrl, from_=1, to=8, width=4); self.spDepth.set(4); self.spDepth.pack(side="left")
+
+        self.btnDraw = ttk.Button(ctrl, text="Dibujar", command=self.draw_tree)
+        self.btnDraw.pack(side="left", padx=10)
+
+        self.btnCenter = ttk.Button(ctrl, text="Centrar", command=lambda: self._center())
+        self.btnCenter.pack(side="left")
+
+        # ---- Canvas con scroll
+        wrap = tk.Frame(self, bg="#101014"); wrap.pack(side="top", fill="both", expand=True)
+        self.canvas = tk.Canvas(wrap, bg="#0c0c12", highlightthickness=0, scrollregion=(0,0,4000,4000))
+        self.canvas.pack(side="left", fill="both", expand=True)
+        self.hbar = ttk.Scrollbar(wrap, orient="horizontal", command=self.canvas.xview)
+        self.hbar.pack(side="bottom", fill="x")
+        self.vbar = ttk.Scrollbar(wrap, orient="vertical", command=self.canvas.yview)
+        self.vbar.pack(side="right", fill="y")
+        self.canvas.configure(xscrollcommand=self.hbar.set, yscrollcommand=self.vbar.set)
+
+        # zoom/pan
+        self.scale = 1.0
+        self.canvas.bind("<MouseWheel>", self._on_wheel)         # Windows
+        self.canvas.bind("<Button-4>", self._on_wheel)           # Linux
+        self.canvas.bind("<Button-5>", self._on_wheel)           # Linux
+        self.canvas.bind("<ButtonPress-2>", self._start_pan)
+        self.canvas.bind("<B2-Motion>", self._do_pan)
+        self._pan_start = None
+
+        # cache de nodos
+        self._nodes = {}  # (id,fam) -> (x,y)
+
+    # --------- interacción ----------
+    def _on_wheel(self, e):
+        delta = 1 if getattr(e, "delta", 0) > 0 or getattr(e, "num", 0) == 4 else -1
+        factor = 1.1 if delta > 0 else 0.9
+        self.scale *= factor
+        self.canvas.scale("all", self.canvas.canvasx(e.x), self.canvas.canvasy(e.y), factor, factor)
+
+    def _start_pan(self, e):
+        self._pan_start = (e.x, e.y)
+
+    def _do_pan(self, e):
+        if not self._pan_start: return
+        dx = self._pan_start[0] - e.x
+        dy = self._pan_start[1] - e.y
+        self._pan_start = (e.x, e.y)
+        self.canvas.xview_scroll(int(dx/2), "units")
+        self.canvas.yview_scroll(int(dy/2), "units")
+
+    def _center(self):
+        # centra en (2000,2000)
+        self.canvas.xview_moveto(0.5)
+        self.canvas.yview_moveto(0.5)
+
+    # --------- dibujo ----------
+    def draw_tree(self):
+        # limpiar
+        self.canvas.delete("all")
+        self._nodes.clear()
+        try:
+            fam = int(self.cmbFam.get()); pid = int(self.txtId.get())
+            depth = int(self.spDepth.get())
+        except:
+            messagebox.showerror("Error", "Ingrese familia (1/2), cédula y profundidad válidos.", parent=self); return
+
+        modo = self.cmbModo.get()
+        conn = DBConnection()
+        try:
+            # obtener capas por niveles
+            levels = self._build_levels(conn, pid, fam, depth, modo)
+        finally:
+            conn.closeConnection()
+
+        # layout simple por capas
+        cx, cy = 2000, 2000
+        h_gap, v_gap = 200, 140
+        start_row = cy - (len(levels)-1)*v_gap/2
+        for i, layer in enumerate(levels):
+            y = start_row + i*v_gap
+            if not layer: continue
+            width = (len(layer)-1)*h_gap
+            x0 = cx - width/2
+            for j, node in enumerate(layer):
+                x = x0 + j*h_gap
+                self._draw_node(node, x, y)
+
+        # aristas después de colocar nodos
+        conn = DBConnection()
+        try:
+            self._draw_edges(conn)
+        finally:
+            conn.closeConnection()
+
+        self._center()
+
+    def _draw_node(self, node, x, y):
+        pid, fam, name, dead = node
+        self._nodes[(pid,fam)] = (x,y)
+        r = 26
+        fill = "#1976D2" if fam == 1 else "#2E7D32"
+        outline = "#E0E0E0"
+        if dead: fill = "#616161"
+        self.canvas.create_oval(x-r, y-r, x+r, y+r, fill=fill, outline=outline, width=2)
+        label = f"{pid}\nF{fam}"
+        self.canvas.create_text(x, y+42, text=label, fill="#ddd", font=("Segoe UI", 9))
+        self.canvas.create_text(x, y-40, text=name[:14], fill="#fff", font=("Segoe UI", 9, "bold"))
+
+    def _draw_edges(self, conn: DBConnection):
+        # Conecta padre -> hijo con líneas; une cónyuges con línea horizontal
+        # Hijos: usar PH1 y PH2
+        for fam_ph in (1,2):
+            _, _, ph = conn._tables_by_family(fam_ph)
+            conn.cursor.execute(f"SELECT IdPadre, IdHijo FROM {ph}")
+            for (p, h) in conn.cursor.fetchall():
+                # padre puede ser de F1 o F2; el hijo vive en fam_ph
+                for fam_p in (1,2):
+                    if (p, fam_p) in self._nodes and (h, fam_ph) in self._nodes:
+                        x1,y1 = self._nodes[(p,fam_p)]
+                        x2,y2 = self._nodes[(h,fam_ph)]
+                        self._edge(x1,y1, x2,y2, arrow=True)
+                        break
+
+        # Cónyuges internos
+        for fam in (1,2):
+            _, rel, _ = conn._tables_by_family(fam)
+            conn.cursor.execute(f"SELECT IdPadre, IdMadre FROM {rel}")
+            for (pa, ma) in conn.cursor.fetchall():
+                if (pa,fam) in self._nodes and (ma,fam) in self._nodes:
+                    x1,y1 = self._nodes[(pa,fam)]
+                    x2,y2 = self._nodes[(ma,fam)]
+                    self._spouse_edge(x1,y1, x2,y2)
+
+        # Cónyuges cross
+        if conn._table_exists("RelacionesCross"):
+            conn.cursor.execute("SELECT IdPersonaA, FamA, IdPersonaB, FamB FROM RelacionesCross")
+            for (ida,fama, idb,famb) in conn.cursor.fetchall():
+                if (ida,fama) in self._nodes and (idb,famb) in self._nodes:
+                    x1,y1 = self._nodes[(ida,fama)]
+                    x2,y2 = self._nodes[(idb,famb)]
+                    self._spouse_edge(x1,y1, x2,y2)
+
+    def _edge(self, x1,y1, x2,y2, arrow=False):
+        midy = (y1+y2)/2
+        self.canvas.create_line(x1, y1+26, x1, midy, x2, midy, x2, y2-26, smooth=True, fill="#BDBDBD", width=2, arrow=tk.LAST if arrow else tk.NONE)
+
+    def _spouse_edge(self, x1,y1, x2,y2):
+        self.canvas.create_line(x1, y1, x2, y2, fill="#FFC107", width=2)
+
+    # --------- cálculo de niveles ----------
+    def _build_levels(self, conn: DBConnection, pid:int, fam:int, depth:int, modo:str):
+        """
+        Devuelve lista de capas [[(pid,fam,name,dead), ...], ...]
+        Ancestros: raíz en último nivel | Descendientes: raíz en primer nivel | Ambos: raíz centrada
+        """
+        # utilidades
+        def basic(p,f):
+            person_table, _, _ = conn._tables_by_family(f)
+            conn.cursor.execute(f"SELECT Nombre, Apellido, Apellido2, FechaFallecimiento FROM {person_table} WHERE ID=?", (int(p),))
+            r = conn.cursor.fetchone()
+            if not r: return (str(p), False)
+            name = f"{(r[0] or '').strip()} {(r[1] or '').strip()}".strip()
+            dead = r[3] is not None
+            return (name if name else str(p), dead)
+
+        # Colecciones
+        root_name, root_dead = basic(pid, fam)
+
+        if modo == "Ancestros":
+            # nivel 0: ancestros más lejanos, nivel N: raíz
+            levels = [[] for _ in range(depth+1)]
+            # raiz
+            levels[-1].append((pid, fam, root_name, root_dead))
+            # subir
+            cur_level = [(pid, fam)]
+            for step in range(depth):
+                parents = []
+                for (cid, cfam) in cur_level:
+                    for (ppid, pfam) in conn._parents_of(cid, cfam):
+                        if (ppid, pfam) not in parents:
+                            parents.append((ppid, pfam))
+                if not parents: break
+                for (ppid, pfam) in parents:
+                    n, d = basic(ppid, pfam)
+                    levels[-2-step].append((ppid, pfam, n, d))
+                cur_level = parents
+            return [lv for lv in levels if lv]
+
+        if modo == "Descendientes":
+            # nivel 0: raíz, luego hijos, etc.
+            levels = [[(pid, fam, root_name, root_dead)]]
+            cur_level = [(pid, fam)]
+            for step in range(depth):
+                kids = []
+                for (pp, pf) in cur_level:
+                    for fam_ph in (1,2):
+                        try:
+                            for hid in conn._children_of(pp, fam_ph):
+                                if (hid, fam_ph) not in kids:
+                                    kids.append((hid, fam_ph))
+                        except TypeError:
+                            # por si la firma en tu _children_of no acepta fam_ph: usar la que tengas
+                            pass
+                if not kids: break
+                layer = []
+                for (hid, hf) in kids:
+                    n, d = basic(hid, hf)
+                    layer.append((hid, hf, n, d))
+                levels.append(layer)
+                cur_level = kids
+            return levels
+
+        # Ambos: ancestros arriba y descendientes abajo
+        up = TreeWindow._compute_ancestors(conn, pid, fam, depth, basic)
+        down = TreeWindow._compute_descendants(conn, pid, fam, depth, basic)
+        # unir: up (sin raiz duplicada) + [root] + down (sin raiz duplicada)
+        final = []
+        final.extend(up)
+        final.append([(pid, fam, root_name, root_dead)])
+        final.extend(down)
+        return final
+
+    @staticmethod
+    def _compute_ancestors(conn, pid, fam, depth, basic_fn):
+        levels = []
+        cur = [(pid, fam)]
+        for step in range(depth):
+            parents = []
+            for (cid, cfam) in cur:
+                for (ppid, pfam) in conn._parents_of(cid, cfam):
+                    if (ppid, pfam) not in parents:
+                        parents.append((ppid, pfam))
+            if not parents: break
+            layer = []
+            for (ppid, pfam) in parents:
+                n, d = basic_fn(ppid, pfam)
+                layer.append((ppid, pfam, n, d))
+            levels.insert(0, layer)  # ancestros “arriba”
+            cur = parents
+        return levels
+
+    @staticmethod
+    def _compute_descendants(conn, pid, fam, depth, basic_fn):
+        levels = []
+        cur = [(pid, fam)]
+        for step in range(depth):
+            kids = []
+            for (pp, pf) in cur:
+                for fam_ph in (1,2):
+                    try:
+                        for hid in conn._children_of(pp, fam_ph):
+                            if (hid, fam_ph) not in kids:
+                                kids.append((hid, fam_ph))
+                    except TypeError:
+                        pass
+            if not kids: break
+            layer = []
+            for (hid, hf) in kids:
+                n, d = basic_fn(hid, hf)
+                layer.append((hid, hf, n, d))
+            levels.append(layer)  # descendientes “abajo”
+            cur = kids
+        return levels

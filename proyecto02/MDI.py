@@ -72,6 +72,10 @@ def showTimeLine():
     timeLine.grab_set()
     timeLine.btnWatch.configure(command=lambda: run(timeLine))
 
+def showTree():
+    tree = TreeWindow()
+    tree.grab_set()
+
 def insertParentChild(fam: int, win):
     try:
         parent_id = int(win.txtIdFather.get().strip())
@@ -331,6 +335,8 @@ def mnuHandler():
     screen.mnuVer.add_command(label="Ver Familia 2", underline=0, command=showFam2)
     screen.mnuVer.add_separator()
     screen.mnuVer.add_command(label="Ver Linea de Tiempo", underline=0, command=showTimeLine)
+    screen.mnuVer.add_separator()
+    screen.mnuVer.add_command(label="Ver Árbol Genealógico", underline=0, command=showTree)
 
     screen.mnuBuscar.add_command(label="Buscar", underline=0, command=showSearch)
 
