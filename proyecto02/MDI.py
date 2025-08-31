@@ -6,10 +6,28 @@ from WindowCnfg import *
 from tkinter import messagebox
 import csv, datetime as dt
 from DataBaseConnection import DBConnection
+import os
 
 
 def open_events_screen():
     win = EventsWindow()
+
+    def _year_of(fecha):
+        # Soporta date, datetime y cadenas de Access
+        try:
+            # date/datetime nativos
+            if hasattr(fecha, "year"):
+                return fecha.year
+            s = str(fecha).strip()
+            # Tries comunes: 'YYYY-mm-dd', 'dd/mm/YYYY', 'mm/dd/YYYY', con/ sin hora
+            for fmt in ("%Y-%m-%d", "%Y-%m-%d %H:%M:%S", "%d/%m/%Y", "%m/%d/%Y"):
+                try:
+                    return dt.datetime.strptime(s, fmt).year
+                except:
+                    pass
+        except:
+            pass
+        return None
 
     def refresh():
         fam = None
@@ -25,35 +43,57 @@ def open_events_screen():
         conn = DBConnection()
         try:
             rows = conn.list_events(fam=fam, person_id=pid, tipo=tipo, limit=500)
-            # filtro adicional: solo [SIM] si se marcó
+            # Solo [SIM], si el usuario marcó el check
             if win.chkSimVar.get():
                 rows = [r for r in rows if ("[SIM]" in r["detalle"]) or ("[SIM]" in r["tipo"])]
-            # poblar
+
+            # --- Filtrar por Año de Simulación si está definido ---
+            # Si existe SIM_YEAR (se setea al iniciar la sim), mostramos SOLO ese año.
+            sim_year = None
+            if 'SIM_YEAR' in globals() and SIM_YEAR is not None:
+                sim_year = int(SIM_YEAR)
+                rows = [r for r in rows if _year_of(r["fecha"]) == sim_year]
+
+            # Poblar tabla
             for item in win.tree.get_children():
                 win.tree.delete(item)
             for r in rows:
                 nombre = conn.get_person_name(r["id"], r["fam"])
-                win.tree.insert("", "end", values=(str(r["fecha"]), r["tipo"], r["id"], nombre, r["fam"], r["detalle"]))
+                win.tree.insert("", "end",
+                    values=(str(r["fecha"]), r["tipo"], r["id"], nombre, r["fam"], r["detalle"]))
         finally:
             conn.closeConnection()
 
     def export_csv():
-        items = [win.tree.item(i,"values") for i in win.tree.get_children()]
+        # Construir ruta docs/ al lado de los .py
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        docs_dir = os.path.join(base_dir, "docs")
+        try:
+            os.makedirs(docs_dir, exist_ok=True)
+        except Exception:
+            pass
+
+        # Nombre de archivo con el año SIM si está disponible
+        year_tag = f"_{int(SIM_YEAR)}" if ('SIM_YEAR' in globals() and SIM_YEAR is not None) else ""
+        path = os.path.join(docs_dir, f"eventos_export{year_tag}.csv")
+
+        items = [win.tree.item(i, "values") for i in win.tree.get_children()]
         if not items:
             messagebox.showwarning("Exportar", "No hay datos para exportar.", parent=win); return
-        path = "eventos_export.csv"
+
         with open(path, "w", newline="", encoding="utf-8") as f:
             w = csv.writer(f)
             w.writerow(["Fecha","Tipo","Cedula","Nombre","Familia","Detalle"])
-            for v in items: w.writerow(list(v))
-        messagebox.showinfo("Exportar", f"Archivo generado: {path}", parent=win)
+            for v in items:
+                w.writerow(list(v))
 
+        messagebox.showinfo("Exportar", f"Archivo generado:\n{path}", parent=win)
+        
     def schedule_auto_refresh():
         # auto-refresh solo mientras la ventana está abierta; si la simulación corre, refresca más seguido
         if getattr(win, "_refresh_job", None):
             win.after_cancel(win._refresh_job)
         refresh()
-        # si la simulación está corriendo, refrescamos cada ~2s; si no, cada 8s
         interval = 2000 if 'SIM_RUNNING' in globals() and SIM_RUNNING else 8000
         win._refresh_job = win.after(interval, schedule_auto_refresh)
 
@@ -65,8 +105,6 @@ def open_events_screen():
 
     win.btnBuscar.configure(command=refresh)
     win.btnExport.configure(command=export_csv)
-
-    # primer refresh + arranque del ciclo
     schedule_auto_refresh()
     win.protocol("WM_DELETE_WINDOW", on_close)
     win.grab_set()
