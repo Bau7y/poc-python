@@ -298,7 +298,7 @@ class TreeWindow(Toplevel):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.title("Árbol genealógico")
-        self.geometry("1000x700")
+        self.geometry("1200x800")
         self.configure(bg="#101014")
 
         # ---- Panel de controles

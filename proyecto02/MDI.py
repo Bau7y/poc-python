@@ -121,16 +121,21 @@ def insertParentChild(fam: int, win):
             messagebox.showerror("Error", "Padre o hijo no existen en la familia seleccionada.", parent=win)
             return
 
-        # Inserta vínculo padre-hijo
+        # Inserta vínculo padre-hijo (en PH de la familia seleccionada)
         created = conn.insert_parent_child_PH(parent_id, child_id, fam)
         if not created:
             messagebox.showinfo("Información", "La relación padre/hijo ya existía.", parent=win)
         else:
+            # <-- NUEVO: si el hijo ya tiene otro progenitor, crear unión (interna o cross)
+            other_parent_id = conn.get_other_parent_for_child(child_id, parent_id, fam)
+            if other_parent_id is not None:
+                made = conn.ensure_union_if_shared_child(parent_id, other_parent_id, fam)
+                if made:
+                    messagebox.showinfo("Éxito", "Relación de pareja creada por descendencia.", parent=win)
+
             messagebox.showinfo("Éxito", "Relación padre/hijo registrada.", parent=win)
 
-
         win.destroy()
-
     finally:
         conn.closeConnection()
 

@@ -71,6 +71,8 @@ class DBConnection:
         self.cursor.execute("DELETE * FROM PadreHijo2")
         self.cursor.execute("DELETE * FROM RelacionesFam2")
         self.cursor.execute("DELETE * FROM RelacionesCross")
+        self.cursor.execute("UPDATE Personas SET FechaFallecimiento = ?", (None,))
+        self.cursor.execute("UPDATE Personas2 SET FechaFallecimiento = ?", (None,))
         self.conn.commit()
 
 
@@ -202,34 +204,82 @@ class DBConnection:
         return int(row[0]) if row else None
     
     def ensure_union_if_shared_child(self, parent_a_id: int, parent_b_id: int, fam: int) -> bool:
-        person_table, rel_table, _ = self._tables_by_family(fam)
-        pa = self.searchPerson(parent_a_id, fam)
-        pb = self.searchPerson(parent_b_id, fam)
+        # Detecta familias reales de cada progenitor
+        pa, fa = self._searchPerson_any(parent_a_id)
+        pb, fb = self._searchPerson_any(parent_b_id)
         if pa is None or pb is None:
-            raise ValueError("No se encontraron ambos padres en la familia indicada.")
+            raise ValueError("No se encontraron ambos padres en ninguna familia.")
         
-        def pick_roles(p1, p2):
+        # Helper: asignar roles por género si se puede (solo para consistencia visual)
+        def pick_roles(p1, f1, p2, f2):
             g1 = (p1.getGender() or "").strip().lower()
             g2 = (p2.getGender() or "").strip().lower()
+            # padre = masculino, madre = femenino (si no, orden estable por ID)
             if "masculino" in g1 and "femenino" in g2:
-                return (p1.getId(), p2.getId())
+                return (p1.getId(), f1, p2.getId(), f2)
             if "femenino" in g1 and "masculino" in g2:
-                return (p2.getId(), p1.getId())
-            a, b = self._normalize_couple(p1.getId(), p2.getId())
-            return (a, b)
-        padre_id, madre_id = pick_roles(pa, pb)
+                return (p2.getId(), f2, p1.getId(), f1)
+            # estable por ID
+            if int(p1.getId()) <= int(p2.getId()):
+                return (p1.getId(), f1, p2.getId(), f2)
+            else:
+                return (p2.getId(), f2, p1.getId(), f1)
 
+        # MISMA FAMILIA → RelacionesFam{fam}
+        if fa == fb:
+            person_table, rel_table, _ = self._tables_by_family(fa)
+            padre_id, padre_fam, madre_id, madre_fam = pick_roles(pa, fa, pb, fb)
+            # ¿Existe?
+            self.cursor.execute(
+                f"SELECT 1 FROM {rel_table} WHERE (IdPadre=? AND IdMadre=?) OR (IdPadre=? AND IdMadre=?)",
+                (int(padre_id), int(madre_id), int(madre_id), int(padre_id))
+            )
+            if self.cursor.fetchone():
+                return False
+            # Insertar
+            self.cursor.execute(
+                f"INSERT INTO {rel_table} (IdPadre, IdMadre, FechaUnion, TipoUnion) VALUES (?, ?, ?, ?)",
+                (int(padre_id), int(madre_id), datetime.now(), "Por descendencia")
+            )
+            # Opcional: estado civil e historial
+            try:
+                self.cursor.execute(f"UPDATE {person_table} SET EstadoCivil=? WHERE ID IN (?,?)", ("Casado", int(padre_id), int(madre_id)))
+                self._log_event(int(padre_id), fa, "Unión (interna)", f"Con {int(madre_id)} (F{fa}) por descendencia")
+                self._log_event(int(madre_id), fa, "Unión (interna)", f"Con {int(padre_id)} (F{fa}) por descendencia")
+            except Exception:
+                pass
+            self.conn.commit()
+            return True
+
+        # DISTINTAS FAMILIAS → RelacionesCross
+        self._ensure_relaciones_cross()
+        padre_id, padre_fam, madre_id, madre_fam = pick_roles(pa, fa, pb, fb)
+        # evita duplicado en cualquier orden
         self.cursor.execute(
-            f"SELECT 1 FROM {rel_table} WHERE (IdPadre=? AND IdMadre=?) OR (IdPadre=? AND IdMadre=?)",
-            (int(padre_id), int(madre_id), int(madre_id), int(padre_id))
+            """SELECT 1 FROM RelacionesCross
+            WHERE (IdPersonaA=? AND FamA=? AND IdPersonaB=? AND FamB=?)
+                OR (IdPersonaA=? AND FamA=? AND IdPersonaB=? AND FamB=?)""",
+            (int(padre_id), int(padre_fam), int(madre_id), int(madre_fam),
+            int(madre_id), int(madre_fam), int(padre_id), int(padre_fam))
         )
         if self.cursor.fetchone():
             return False
-        
+
         self.cursor.execute(
-            f"INSERT INTO {rel_table} (IdPadre, IdMadre, FechaUnion, TipoUnion) VALUES (?, ?, ?, ?)",
-            (int(padre_id), int(madre_id), datetime.now(), "Por descendencia")
+            "INSERT INTO RelacionesCross (IdPersonaA, FamA, IdPersonaB, FamB, FechaUnion, TipoUnion) VALUES (?, ?, ?, ?, ?, ?)",
+            (int(padre_id), int(padre_fam), int(madre_id), int(madre_fam), datetime.now(), "Por descendencia")
         )
+        # Opcional: estado civil e historial
+        try:
+            ptA, _, _ = self._tables_by_family(padre_fam)
+            ptB, _, _ = self._tables_by_family(madre_fam)
+            self.cursor.execute(f"UPDATE {ptA} SET EstadoCivil=? WHERE ID=?", ("Casado", int(padre_id)))
+            self.cursor.execute(f"UPDATE {ptB} SET EstadoCivil=? WHERE ID=?", ("Casado", int(madre_id)))
+            self._log_event(int(padre_id), int(padre_fam), "Unión (cross)", f"Con {int(madre_id)} (F{madre_fam}) por descendencia")
+            self._log_event(int(madre_id), int(madre_fam), "Unión (cross)", f"Con {int(padre_id)} (F{padre_fam}) por descendencia")
+        except Exception:
+            pass
+
         self.conn.commit()
         return True
     
