@@ -27,6 +27,35 @@ def simulation_tick(root):
         conn.closeConnection()
     root.after(SIM_INTERVAL_MS, lambda: simulation_tick(root))
 
+def run(timeLine):
+    try:
+        fam = int(timeLine.fam_var.get().strip())
+        pid = int(timeLine.id_var.get().strip())
+        if fam not in (1, 2): raise ValueError
+    except:
+        messagebox.showerror("Error", "La familia y/o la persona deben ser numéricas.", parent=timeLine); return
+    
+    conn = DBConnection()
+    try:
+        rows = conn.build_person_timeline(pid, fam)
+    finally:
+        conn.closeConnection()
+
+    if not rows:
+        messagebox.showinfo("Línea de tiempo", "Sin eventos para esa persona.", parent=timeLine); return
+
+    # Arma texto con AÑO - Tipo - Detalle
+    out = []
+    for r in rows:
+        f = r["fecha"]
+        try:
+            y = (f.year if hasattr(f, "year") else dt.datetime.strptime(str(f), "%Y-%m-%d %H:%M:%S").year)
+        except:
+            y = str(f)
+        out.append(f"{y} — {r['tipo']}: {r['detalle']}")
+    messagebox.showinfo("Línea de tiempo", "\n".join(out), parent=timeLine)
+    timeLine.txtId.delete(0, END)
+
 
 def showFam2():
     fam2 = VistaPersonasFam1(2)
@@ -36,6 +65,12 @@ def showFam2():
 def showFam1():
     fam1 = VistaPersonasFam1(1)
     fam1.grab_set()
+
+
+def showTimeLine():
+    timeLine = TimeLine()
+    timeLine.grab_set()
+    timeLine.btnWatch.configure(command=lambda: run(timeLine))
 
 def insertParentChild(fam: int, win):
     try:
@@ -295,8 +330,7 @@ def mnuHandler():
     screen.mnuVer.add_command(label="Ver Familia 1", underline=0, command=showFam1)
     screen.mnuVer.add_command(label="Ver Familia 2", underline=0, command=showFam2)
     screen.mnuVer.add_separator()
-    screen.mnuVer.add_command(label="Ver Linea de Tiempo Familia 1")
-    screen.mnuVer.add_command(label="Ver Linea de Tiempo Familia 2")
+    screen.mnuVer.add_command(label="Ver Linea de Tiempo", underline=0, command=showTimeLine)
 
     screen.mnuBuscar.add_command(label="Buscar", underline=0, command=showSearch)
 

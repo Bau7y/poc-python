@@ -338,7 +338,7 @@ class TimeLine(Toplevel):
         self.txtChoice = Entry(self, bg="#FFFFFF", font=("Arial", 12), textvariable=self.fam_var, width=8)
         self.lblId = Label(self, text="Cédula:", bg="#FFFFFF", font=("Arial", 12))
         self.id_var = StringVar()
-        self.txtId = Entry(self, bg="#FFFFFF", font=("Arial", 12), textvariable=self.id_var, width=8)
+        self.txtId = Entry(self, bg="#FFFFFF", font=("Arial", 12), textvariable=self.id_var, width=12)
         self.btnWatch = Button(self, text="Ver", font=("Arial", 12))
         self.btnClose = Button(self, text="Cerrar", font=("Arial", 12), command=self.destroy)
 
