@@ -315,3 +315,39 @@ class FatherSonWindow(Toplevel):
         self.txtIdFather.place(x=250, y=50)
         self.txtIdSon.place(x=250, y=100)
         self.btnAccept.place(x=250, y=150)
+
+
+class TimeLine(Toplevel):
+    def __init__(self, master = None):
+        super().__init__(master)
+        self.timelineCnfg()
+        self.createObjs()
+        self.placeObjs()
+
+    def timelineCnfg(self):
+        self["bg"] = "#FFFFFF"
+        self.resizable(False, False)
+        self.geometry("600x600")
+        self.title("Línea de tiempo")
+        self.focus_set()
+
+
+    def createObjs(self):
+        self.lblChoice = Label(self, text="Familia (1 o 2):", bg="#FFFFFF", font=("Arial", 12))
+        self.fam_var = StringVar()
+        self.txtChoice = Entry(self, bg="#FFFFFF", font=("Arial", 12), textvariable=self.fam_var, width=8)
+        self.lblId = Label(self, text="Cédula:", bg="#FFFFFF", font=("Arial", 12))
+        self.id_var = StringVar()
+        self.txtId = Entry(self, bg="#FFFFFF", font=("Arial", 12), textvariable=self.id_var, width=8)
+        self.btnWatch = Button(self, text="Ver", font=("Arial", 12))
+        self.btnClose = Button(self, text="Cerrar", font=("Arial", 12), command=self.destroy)
+
+
+    
+    def placeObjs(self):
+        self.lblChoice.place(x=50, y=50)
+        self.txtChoice.place(x=150, y=50)
+        self.lblId.place(x=50, y=100)
+        self.txtId.place(x=150, y=100)
+        self.btnWatch.place(x=50, y=150)
+        self.btnClose.place(x=150, y=150)

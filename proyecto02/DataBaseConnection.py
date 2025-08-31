@@ -468,6 +468,9 @@ class DBConnection:
                 "INSERT INTO RelacionesCross (IdPersonaA, FamA, IdPersonaB, FamB, FechaUnion, TipoUnion) VALUES (?, 1, ?, 2, ?, ?)",
                 (int(a.getId()), int(b.getId()), datetime.now(), "Afinidad Cross")
             )
+            self._log_event(int(a.getId()), 1, "Unión (cross)", f"Con {int(b.getId())} (F2)")
+            self._log_event(int(b.getId()), 2, "Unión (cross)", f"Con {int(a.getId())} (F1)")
+
             # Cambiar estado civil (opcional pero útil)
             self.cursor.execute("UPDATE Personas  SET EstadoCivil=? WHERE ID=?", ("Casado", int(a.getId())))
             self.cursor.execute("UPDATE Personas2 SET EstadoCivil=? WHERE ID=?", ("Casado", int(b.getId())))
@@ -588,6 +591,10 @@ class DBConnection:
             # Vincula en PH de la familia del bebé con ambos padres (IDs globales de cédula)
             self.cursor.execute(f"INSERT INTO {ph_table} (IdPadre, IdHijo) VALUES (?, ?)", (int(father_id), int(new_id)))
             self.cursor.execute(f"INSERT INTO {ph_table} (IdPadre, IdHijo) VALUES (?, ?)", (int(mother_id), int(new_id)))
+            self._log_event(int(new_id), bebe_fam, "Nacimiento", f"{nombre} {last1} {last2}".strip())
+            self._log_event(int(father_id), father_fam, "Nacimiento de hijo", f"Hijo {int(new_id)} (F{bebe_fam})")
+            self._log_event(int(mother_id), mother_fam, "Nacimiento de hijo", f"Hijo {int(new_id)} (F{bebe_fam})")
+
             self.conn.commit()
             births += 1
 
@@ -958,6 +965,90 @@ class DBConnection:
                         out.append((int(pid), fam, age, d))
         out.sort(key=lambda x: (x[2], x[3]))
         return out
+    
+
+    def build_person_timeline(self, pid:int, fam:int):
+        """
+        Línea de tiempo para una persona:
+        - Nacimiento (desde Personas/2)
+        - Uniones de pareja (RelacionesFam{fam} y RelacionesCross)
+        - Nacimientos de hijos (desde PadreHijo1/2 con fecha del hijo)
+        - Viudez (desde HistorialEventos, si existe)
+        - Fallecimiento (desde Personas/2)
+        Retorna: lista de dicts [{fecha: date/datetime, tipo: str, detalle: str}]
+        """
+        events = []
+
+        # --- Persona base (nacimiento/fallecimiento)
+        person_table, rel_table, ph_table = self._tables_by_family(fam)
+        self.cursor.execute(f"SELECT Nombre, Apellido, Apellido2, FechaNacimiento, FechaFallecimiento FROM {person_table} WHERE ID=?", (int(pid),))
+        row = self.cursor.fetchone()
+        if not row:
+            return []
+        nombre, a1, a2, fnac, fdef = row
+        d_nac = self._to_date(fnac)
+        d_def = self._to_date(fdef)
+        if d_nac:
+            events.append({"fecha": d_nac, "tipo": "Nacimiento", "detalle": f"{nombre} {a1} {a2}".strip()})
+        if d_def:
+            events.append({"fecha": d_def, "tipo": "Fallecimiento", "detalle": f"{nombre} {a1} {a2}".strip()})
+
+        # --- Uniones internas (en su misma familia)
+        self.cursor.execute(f"SELECT IdPadre, IdMadre, FechaUnion, TipoUnion FROM {rel_table} WHERE IdPadre=? OR IdMadre=?", (int(pid), int(pid)))
+        for (p, m, fu, tu) in self.cursor.fetchall():
+            spouse_id = m if p == pid else p
+            fu_d = self._to_date(fu) or dt.date.today()
+            events.append({"fecha": fu_d, "tipo": "Unión (interna)", "detalle": f"Con {spouse_id} (F{fam}) - {tu or ''}".strip()})
+
+        # --- Uniones F1<->F2 (RelacionesCross)
+        if self._table_exists("RelacionesCross"):
+            # como A
+            self.cursor.execute("SELECT IdPersonaB, FamB, FechaUnion, TipoUnion FROM RelacionesCross WHERE IdPersonaA=? AND FamA=?", (int(pid), int(fam)))
+            for (sid, sf, fu, tu) in self.cursor.fetchall():
+                fu_d = self._to_date(fu) or dt.date.today()
+                events.append({"fecha": fu_d, "tipo": "Unión (cross)", "detalle": f"Con {sid} (F{sf}) - {tu or ''}".strip()})
+            # como B
+            self.cursor.execute("SELECT IdPersonaA, FamA, FechaUnion, TipoUnion FROM RelacionesCross WHERE IdPersonaB=? AND FamB=?", (int(pid), int(fam)))
+            for (sid, sf, fu, tu) in self.cursor.fetchall():
+                fu_d = self._to_date(fu) or dt.date.today()
+                events.append({"fecha": fu_d, "tipo": "Unión (cross)", "detalle": f"Con {sid} (F{sf}) - {tu or ''}".strip()})
+
+        # --- Nacimientos de hijos (revisar PH1 y PH2 porque el hijo puede vivir en cualquiera)
+        for fam_ph in (1, 2):
+            _, _, ph_t = self._tables_by_family(fam_ph)
+            self.cursor.execute(f"SELECT IdHijo FROM {ph_t} WHERE IdPadre=?", (int(pid),))
+            hijos = [int(r[0]) for r in self.cursor.fetchall()]
+            if not hijos:
+                continue
+            # Para cada hijo, tomar su fecha de nacimiento desde su tabla Personas/2 (según familia del hijo)
+            for hid in hijos:
+                # primero intentamos en fam_ph
+                pt, _, _ = self._tables_by_family(fam_ph)
+                self.cursor.execute(f"SELECT FechaNacimiento FROM {pt} WHERE ID=?", (int(hid),))
+                r = self.cursor.fetchone()
+                if not r or not r[0]:
+                    # fallback: buscar en la otra familia por si el hijo fue movido
+                    other_fam = 1 if fam_ph == 2 else 2
+                    pt2, _, _ = self._tables_by_family(other_fam)
+                    self.cursor.execute(f"SELECT FechaNacimiento FROM {pt2} WHERE ID=?", (int(hid),))
+                    r = self.cursor.fetchone()
+                if r and r[0]:
+                    fh = self._to_date(r[0])
+                    if fh:
+                        events.append({"fecha": fh, "tipo": "Nacimiento de hijo", "detalle": f"Hijo {hid} (F{fam_ph})"})
+
+        # --- Viudez desde HistorialEventos (si existe)
+        try:
+            self.cursor.execute("SELECT Fecha, Detalle FROM HistorialEventos WHERE IdPersona=? AND Familia=? AND Tipo='Viudez' ORDER BY Fecha", (int(pid), int(fam)))
+            for (fec, det) in self.cursor.fetchall():
+                events.append({"fecha": fec, "tipo": "Viudez", "detalle": det or ""})
+        except Exception:
+            pass
+
+        # Ordenar por fecha
+        events.sort(key=lambda x: self._to_date(x["fecha"]) or dt.date.min)
+        return events
+
 
         
 
