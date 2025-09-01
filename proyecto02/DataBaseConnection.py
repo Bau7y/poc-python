@@ -72,8 +72,8 @@ class DBConnection:
         self.cursor.execute("DELETE * FROM PadreHijo2")
         self.cursor.execute("DELETE * FROM RelacionesFam2")
         self.cursor.execute("DELETE * FROM RelacionesCross")
-        self.cursor.execute("UPDATE Personas SET FechaFallecimiento = ?", (None,))
-        self.cursor.execute("UPDATE Personas2 SET FechaFallecimiento = ?", (None,))
+        self.cursor.execute("DELETE * FROM Personas")
+        self.cursor.execute("DELETE * FROM Personas2")
         self.conn.commit()
 
 
@@ -479,7 +479,7 @@ class DBConnection:
             for a, b in zip(singles1, singles2):
                 if created >= max_pairs: break
                 if random.random() > prob_attempt: continue
-                # NUEVO: solo heterosexuales
+                
                 if not self._is_opposite_gender(a, b):
                     continue
                 if not self._are_eligible_to_unite(a, b, 1):
