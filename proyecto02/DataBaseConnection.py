@@ -344,23 +344,22 @@ class DBConnection:
         return hoy.year - d.year - ((hoy.month, hoy.day) < (d.month, d.day))
 
     def _are_eligible_to_unite(self, pa, pb, fam:int):
-        """
-        Valida reglas mínimas de unión:
-        - >=18 años
-        - Diferencia de edad <= 15
-        - Compatibilidad >=70 (placeholder razonable)
-        - Evitar genética riesgosa básica (hermanos)
-        """
+        if not self._is_opposite_gender(pa, pb):
+            return False
+
+        # 1) >=18 años
         ea = self._calc_age_from_birth(pa.getBirthDate())
         eb = self._calc_age_from_birth(pb.getBirthDate())
         if ea is None or eb is None:
             return False
         if ea < 18 or eb < 18:
             return False
+
+        # 2) diferencia <= 15
         if abs(ea - eb) > 15:
             return False
 
-        # Compatibilidad simple (puedes mejorar luego)
+        # 3) compatibilidad simple
         comp = 50
         if (pa.getProvince() or "").strip().lower() == (pb.getProvince() or "").strip().lower():
             comp += 25
@@ -370,7 +369,7 @@ class DBConnection:
         if comp < 70:
             return False
 
-        # Evitar hermanos: comparten al menos un IdPadre en PadreHijo
+        # 4) evitar hermanos (comparten al menos un IdPadre en PH de la familia consultada)
         _, _, ph_table = self._tables_by_family(fam)
         self.cursor.execute(f"SELECT IdPadre FROM {ph_table} WHERE IdHijo=?", (int(pa.getId()),))
         padres_a = {r[0] for r in self.cursor.fetchall()}
@@ -477,6 +476,14 @@ class DBConnection:
         for a, b in zip(singles1, singles2):
             if created >= max_pairs: break
             if random.random() > prob_attempt: continue
+            for a, b in zip(singles1, singles2):
+                if created >= max_pairs: break
+                if random.random() > prob_attempt: continue
+                # NUEVO: solo heterosexuales
+                if not self._is_opposite_gender(a, b):
+                    continue
+                if not self._are_eligible_to_unite(a, b, 1):
+                    continue
             if not self._are_eligible_to_unite(a, b, 1):  # chequeo básico
                 continue
 
@@ -1205,6 +1212,13 @@ class DBConnection:
         if not r: return ""
         nom, a1, a2 = (r[0] or "").strip(), (r[1] or "").strip(), (r[2] or "").strip()
         return f"{nom} {a1} {a2}".strip()
+    
+
+    def _is_opposite_gender(self, pa, pb) -> bool:
+        g1 = ((pa.getGender() or "").strip().lower())
+        g2 = ((pb.getGender() or "").strip().lower())
+        return (("masculino" in g1 and "femenino" in g2) or
+                ("femenino" in g1 and "masculino" in g2))
 
 
 
