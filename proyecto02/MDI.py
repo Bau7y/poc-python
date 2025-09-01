@@ -11,61 +11,46 @@ import os
 
 def open_events_screen():
     win = EventsWindow()
-
-    def _year_of(fecha):
-        # Soporta date, datetime y cadenas de Access
-        try:
-            # date/datetime nativos
-            if hasattr(fecha, "year"):
-                return fecha.year
-            s = str(fecha).strip()
-            # Tries comunes: 'YYYY-mm-dd', 'dd/mm/YYYY', 'mm/dd/YYYY', con/ sin hora
-            for fmt in ("%Y-%m-%d", "%Y-%m-%d %H:%M:%S", "%d/%m/%Y", "%m/%d/%Y"):
-                try:
-                    return dt.datetime.strptime(s, fmt).year
-                except:
-                    pass
-        except:
-            pass
-        return None
+    win._refresh_job = None   # id del after
 
     def refresh():
+        # --- Filtros de la UI ---
         fam = None
         fsel = win.cmbFam.get()
-        if fsel in ("1","2"):
+        if fsel in ("1", "2"):
             fam = int(fsel)
-        tipo = None if win.cmbTipo.get()=="Todos" else win.cmbTipo.get()
+
+        tipo = None if win.cmbTipo.get() == "Todos" else win.cmbTipo.get()
+
         pid = None
         pid_txt = win.txtId.get().strip()
         if pid_txt.isdigit():
             pid = int(pid_txt)
 
+        # --- Leer eventos y poblar tabla ---
         conn = DBConnection()
         try:
             rows = conn.list_events(fam=fam, person_id=pid, tipo=tipo, limit=500)
-            # Solo [SIM], si el usuario marcó el check
+
+            # Solo [SIM] si está marcado
             if win.chkSimVar.get():
                 rows = [r for r in rows if ("[SIM]" in r["detalle"]) or ("[SIM]" in r["tipo"])]
 
-            # --- Filtrar por Año de Simulación si está definido ---
-            # Si existe SIM_YEAR (se setea al iniciar la sim), mostramos SOLO ese año.
-            sim_year = None
-            if 'SIM_YEAR' in globals() and SIM_YEAR is not None:
-                sim_year = int(SIM_YEAR)
-                rows = [r for r in rows if _year_of(r["fecha"]) == sim_year]
-
-            # Poblar tabla
+            # Limpiar tabla
             for item in win.tree.get_children():
                 win.tree.delete(item)
+
+            # Insertar filas
             for r in rows:
                 nombre = conn.get_person_name(r["id"], r["fam"])
-                win.tree.insert("", "end",
-                    values=(str(r["fecha"]), r["tipo"], r["id"], nombre, r["fam"], r["detalle"]))
+                win.tree.insert(
+                    "", "end",
+                    values=(str(r["fecha"]), r["tipo"], r["id"], nombre, r["fam"], r["detalle"])
+                )
         finally:
             conn.closeConnection()
 
     def export_csv():
-        # Construir ruta docs/ al lado de los .py
         base_dir = os.path.dirname(os.path.abspath(__file__))
         docs_dir = os.path.join(base_dir, "docs")
         try:
@@ -73,42 +58,61 @@ def open_events_screen():
         except Exception:
             pass
 
-        # Nombre de archivo con el año SIM si está disponible
-        year_tag = f"_{int(SIM_YEAR)}" if ('SIM_YEAR' in globals() and SIM_YEAR is not None) else ""
-        path = os.path.join(docs_dir, f"eventos_export{year_tag}.csv")
+        path = os.path.join(docs_dir, "eventos_export.csv")
 
         items = [win.tree.item(i, "values") for i in win.tree.get_children()]
         if not items:
-            messagebox.showwarning("Exportar", "No hay datos para exportar.", parent=win); return
+            messagebox.showwarning("Exportar", "No hay datos para exportar.", parent=win)
+            return
 
         with open(path, "w", newline="", encoding="utf-8") as f:
             w = csv.writer(f)
-            w.writerow(["Fecha","Tipo","Cedula","Nombre","Familia","Detalle"])
+            w.writerow(["Fecha", "Tipo", "Cedula", "Nombre", "Familia", "Detalle"])
             for v in items:
                 w.writerow(list(v))
 
         messagebox.showinfo("Exportar", f"Archivo generado:\n{path}", parent=win)
-        
+
+    # --- AUTO-REFRESH: cada 2s si hay simulación corriendo; 8s si está pausada ---
     def schedule_auto_refresh():
-        # auto-refresh solo mientras la ventana está abierta; si la simulación corre, refresca más seguido
         if getattr(win, "_refresh_job", None):
-            win.after_cancel(win._refresh_job)
+            try:
+                win.after_cancel(win._refresh_job)
+            except Exception:
+                pass
         refresh()
-        interval = 2000 if 'SIM_RUNNING' in globals() and SIM_RUNNING else 8000
+        interval = 2000 if ('SIM_RUNNING' in globals() and SIM_RUNNING) else 8000
         win._refresh_job = win.after(interval, schedule_auto_refresh)
 
     def on_close():
+        # quitar timer
         if getattr(win, "_refresh_job", None):
-            try: win.after_cancel(win._refresh_job)
-            except Exception: pass
+            try:
+                win.after_cancel(win._refresh_job)
+            except Exception:
+                pass
+            win._refresh_job = None
+        # quitar gancho global
+        try:
+            if 'EVENTS_REFRESH' in globals():
+                del globals()['EVENTS_REFRESH']
+        except Exception:
+            pass
         win.destroy()
 
+    # Botones
     win.btnBuscar.configure(command=refresh)
     win.btnExport.configure(command=export_csv)
+
+    # Gancho global para refresco inmediato desde simulation_tick
+    globals()['EVENTS_REFRESH'] = refresh
+
+    # Arrancar ciclo de auto-refresh
     schedule_auto_refresh()
+
+    # Cierre ordenado
     win.protocol("WM_DELETE_WINDOW", on_close)
     win.grab_set()
-
 
 def simulation_tick(root):
     global _SIM_AFTER_ID, SIM_YEAR
@@ -133,6 +137,8 @@ def simulation_tick(root):
         root.winfo_toplevel().title(
             f"Árbol genealógico | Año SIM:{SIM_YEAR}  Cross Unions:{unions_cross}  Cross Births:{births_cross}  Fallec:{total_deaths}"
         )
+        if 'EVENTS_REFRESH' in globals():
+            globals()['EVENTS_REFRESH']()
     except Exception as e:
         print("Simulación error:", e)
     finally:

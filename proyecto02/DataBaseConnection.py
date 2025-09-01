@@ -14,6 +14,7 @@ class DBConnection:
 
         self.conn = connect(self.driver + self.DBPath)
         self.cursor = self.conn.cursor()
+        self._ensure_hist_table()
 
     def closeConnection(self):
         self.cursor.close()
@@ -145,13 +146,26 @@ class DBConnection:
         return (r is not None) and (r[0] is None)
     
     def _log_event(self, pid:int, fam:int, tipo:str, detalle:str, fecha=None):
-        """Inserta en HistorialEventos si existe. Usa 'fecha' si viene, si no now()."""
-        if not self._table_exists("HistorialEventos"):
-            return
+        """Inserta en HistorialEventos. Asegura la tabla antes de escribir."""
+        # Garantiza existencia de la tabla
+        try:
+            self.cursor.execute("SELECT 1 FROM HistorialEventos WHERE 1=0")
+        except Exception:
+            try:
+                self.cursor.execute(
+                    "CREATE TABLE HistorialEventos ("
+                    "IdPersona INTEGER, Familia INTEGER, Fecha DATETIME, "
+                    "Tipo TEXT(50), Detalle TEXT)"
+                )
+                self.conn.commit()
+            except Exception:
+                return  # si Access no deja crearla por algún motivo, no rompemos
+
         ts = fecha or dt.datetime.now()
         try:
             self.cursor.execute(
-                "INSERT INTO HistorialEventos (IdPersona, Familia, Fecha, Tipo, Detalle) VALUES (?, ?, ?, ?, ?)",
+                "INSERT INTO HistorialEventos (IdPersona, Familia, Fecha, Tipo, Detalle) "
+                "VALUES (?, ?, ?, ?, ?)",
                 (int(pid), int(fam), ts, tipo, detalle)
             )
             self.conn.commit()
@@ -311,25 +325,6 @@ class DBConnection:
                 except Exception as e:
                     print("Side-effects error:", e)
         return deaths
-
-    # ------- Nacimientos (hijos de parejas activas) -------
-    def list_couples(self, fam:int):
-        """
-        Devuelve lista de tuplas (padre_id, madre_id) de RelacionesFam{fam}
-        que no estén fallecidos ambos.
-        """
-        person_table, rel_table, _ = self._tables_by_family(fam)
-        self.cursor.execute(f"SELECT IdPadre, IdMadre FROM {rel_table}")
-        couples = []
-        for (p, m) in self.cursor.fetchall():
-            # Chequeo básico: que existan y no estén ambos fallecidos
-            self.cursor.execute(f"SELECT FechaFallecimiento FROM {person_table} WHERE ID=?", (int(p),))
-            pd = self.cursor.fetchone()
-            self.cursor.execute(f"SELECT FechaFallecimiento FROM {person_table} WHERE ID=?", (int(m),))
-            md = self.cursor.fetchone()
-            if pd and md and not (pd[0] and md[0]):
-                couples.append((int(p), int(m)))
-        return couples
 
     def _age_or_calc(self, person, fam:int):
         """Obtiene edad persistida si existe, o la calcula desde FechaNacimiento."""
@@ -1150,8 +1145,67 @@ class DBConnection:
             pass
 
         return summary
+    
+    def _ensure_hist_table(self):
+        """Crea HistorialEventos si no existe (Access no soporta IF NOT EXISTS)."""
+        try:
+            self.cursor.execute("SELECT 1 FROM HistorialEventos WHERE 1=0")
+            _ = self.cursor.fetchone()
+        except Exception:
+            try:
+                self.cursor.execute(
+                    "CREATE TABLE HistorialEventos ("
+                    "IdPersona INTEGER, "
+                    "Familia INTEGER, "
+                    "Fecha DATETIME, "
+                    "Tipo TEXT(50), "
+                    "Detalle TEXT)"
+                )
+                self.conn.commit()
+            except Exception:
+                pass
+    
+    def list_events(self, fam:int|None=None, person_id:int|None=None,
+                tipo:str|None=None, date_from=None, date_to=None, limit:int=500):
+        """
+        Devuelve lista de dicts: {id, fam, fecha, tipo, detalle} desde HistorialEventos,
+        con filtros opcionales. Si la tabla no existe, retorna [].
+        """
+        # Verificar existencia de tabla
+        try:
+            self.cursor.execute("SELECT 1 FROM HistorialEventos WHERE 1=0")
+        except Exception:
+            return []
 
+        q = "SELECT IdPersona, Familia, Fecha, Tipo, Detalle FROM HistorialEventos WHERE 1=1"
+        params = []
+        if fam in (1,2):
+            q += " AND Familia=?"; params.append(int(fam))
+        if person_id is not None:
+            q += " AND IdPersona=?"; params.append(int(person_id))
+        if tipo and tipo.strip():
+            q += " AND Tipo=?"; params.append(tipo.strip())
+        if date_from is not None:
+            q += " AND Fecha >= ?"; params.append(date_from)
+        if date_to is not None:
+            q += " AND Fecha <= ?"; params.append(date_to)
+        q += " ORDER BY Fecha DESC"
+
+        self.cursor.execute(q, tuple(params))
+        rows = self.cursor.fetchall()
+        return [{"id": int(pid), "fam": int(ff), "fecha": fec, "tipo": tp, "detalle": det or ""} 
+                for (pid, ff, fec, tp, det) in rows[:limit]]
         
+
+    def get_person_name(self, pid:int, fam:int) -> str:
+        person_table, _, _ = self._tables_by_family(fam)
+        self.cursor.execute(f"SELECT Nombre, Apellido, Apellido2 FROM {person_table} WHERE ID=?", (int(pid),))
+        r = self.cursor.fetchone()
+        if not r: return ""
+        nom, a1, a2 = (r[0] or "").strip(), (r[1] or "").strip(), (r[2] or "").strip()
+        return f"{nom} {a1} {a2}".strip()
+
+
 
 
 conn = DBConnection()
