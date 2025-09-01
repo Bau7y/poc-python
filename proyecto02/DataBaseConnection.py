@@ -1056,6 +1056,7 @@ class DBConnection:
         - Borra eventos [SIM].
         """
         summary = {"personas_borradas":0, "ph_borrados":0, "cross_borradas":0, "fallecimientos_revertidos":0, "viudez_revertida":0, "eventos_borrados":0}
+        self.cursor.execute("DELETE * FROM Tutorias")
 
         # 1) bebés [SIM]
         sim_babies = []
