@@ -251,7 +251,8 @@ def insertParentChild(fam: int, win):
 
             messagebox.showinfo("Éxito", "Relación padre/hijo registrada.", parent=win)
 
-        win.destroy()
+        win.txtIdFather.delete(0, END)
+        win.txtIdSon.delete(0, END)
     finally:
         conn.closeConnection()
 
